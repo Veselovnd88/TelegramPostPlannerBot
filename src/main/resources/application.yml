@@ -1,0 +1,42 @@
+server:
+  port: 9090
+logging:
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  level:
+    root: INFO
+  file: /home/nikolay/log/planner-bot.log
+bot:
+  name: ${PL_BOT_NAME}
+  token: ${PL_BOT_TOKEN}
+  webhookpath: https://www.planner-bot.ru
+  status:
+    standard: 10
+    premium: 50
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/plannerbot
+    username: ${POSTGRES_NAME}
+    password: ${POSTGRES_PASSWORD}
+
+  jpa:
+    generate-ddl: true
+    #в проде заменить на validate
+    ddl-auto: create
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: false
+service:
+  file_info:
+      uri: https://api.telegram.org/bot{token}/getFile?file_id={fileId}
+  file_storage:
+      uri: https://api.telegram.org/file/bot{token}/{filePath}
+
+
+
+
+
