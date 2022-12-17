@@ -64,6 +64,10 @@ public class PostService {
                     postEntity = optionalPostEntity.orElseGet(() -> convertToEntity(postDto));
                     postEntity.setPostState(PostState.PLANNED);
                 }
+                else if(postState==PostState.PLANNED){
+                    Optional<PostEntity> optionalPostEntity =postRepository.findById(postDto.getPostId());
+                    postEntity=optionalPostEntity.orElseGet(()->convertToEntity(postDto));
+                }
                 else{
                     postEntity=convertToEntity(postDto);
                     postEntity.setPostState(PostState.PLANNED);

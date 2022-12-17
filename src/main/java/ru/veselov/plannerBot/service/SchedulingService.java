@@ -37,6 +37,11 @@ public class SchedulingService {
         calendar.setTimeZone(tz);
         log.info("Проверяю хранилище постов и назначаю в очереди в {}", calendar.getTime());
         calendar.add(Calendar.DATE, 1);
+        //Проверяются все посты со статусом PLANNED, которые не были отправлены
+        List<Post> planned = postService.todayPosts(new Date(), PostState.PLANNED);
+        for(Post post:planned){
+            postService.planPost(post);
+        }
 
         List<Post> today = postService.todayPosts(calendar.getTime(), PostState.SAVED);
             for(Post post:today){

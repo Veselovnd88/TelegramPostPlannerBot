@@ -14,7 +14,7 @@ bot:
   status:
     standard: 10
     premium: 50
-  period: "0 0 */6 * * *"
+  period: "0 * * * * *"
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
