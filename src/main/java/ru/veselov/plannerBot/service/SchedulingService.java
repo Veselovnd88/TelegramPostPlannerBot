@@ -2,6 +2,7 @@ package ru.veselov.plannerBot.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
@@ -13,7 +14,6 @@ import ru.veselov.plannerBot.model.PostState;
 
 import java.util.*;
 
-//@Service
 @Slf4j
 @Service
 public class SchedulingService {
@@ -22,6 +22,7 @@ public class SchedulingService {
     private final DataCache userDataCache;
     private final TimeZone tz = TimeZone.getTimeZone("Europe/Moscow");
 
+
     @Autowired
     public SchedulingService(MyPreciousBot bot, PostService postService, UserDataCache userDataCache) {
         this.bot = bot;
@@ -29,7 +30,7 @@ public class SchedulingService {
         this.userDataCache = userDataCache;
     }
 
-    @Scheduled(cron = "0 0 0 * * *",zone = "Europe/Moscow")
+    @Scheduled(cron = "${bot.period}",zone = "Europe/Moscow")//секунда 0, минута 0 каждые 6 часов
     public void scheduledTask(){
         checkPostCreators();
         Calendar calendar = Calendar.getInstance();

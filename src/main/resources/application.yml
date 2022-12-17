@@ -10,11 +10,11 @@ logging:
 bot:
   name: ${PL_BOT_NAME}
   token: ${PL_BOT_TOKEN}
-  webhookpath: https://www.planner-bot.ru
+  webhookpath: https://b887-2a00-1fa0-4a0f-7d97-684-d3d3-6bcf-f408.eu.ngrok.io
   status:
     standard: 10
     premium: 50
-
+  period: "0 0 */6 * * *"
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
