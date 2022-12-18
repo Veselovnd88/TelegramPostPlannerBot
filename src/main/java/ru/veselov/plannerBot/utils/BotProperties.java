@@ -11,5 +11,6 @@ public class BotProperties {
     private String name;
     private String token;
     private String webHookPath;
+    private String adminId;
 
 }

@@ -11,11 +11,12 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.SetChatPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updates.SetWebhook;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
-import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
+import org.telegram.telegrambots.meta.api.objects.commands.scope.*;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.controller.UpdateController;
 import ru.veselov.plannerBot.utils.BotProperties;
@@ -44,11 +45,17 @@ public class MyPreciousBot extends TelegramLongPollingBot {
         BotCommand resetCommand = new BotCommand("/reset", "Сбросить");
         BotCommand helpCommand = new BotCommand("/help","Информация о боте");
         List<BotCommand> commandList = new ArrayList<>(List.of(startCommand, createPostCommand, seeAllPostsCommand, resetCommand, helpCommand));
-
+        //Установка меню только для админа TODO сделать обработку для команды /promote
+        BotCommandScopeChat botCommandScopeChat = new BotCommandScopeChat();
+        botCommandScopeChat.setChatId(Long.valueOf(botProperties.getAdminId()));
+        List<BotCommand> commandsAdmin = new ArrayList<>(commandList);
+        BotCommand promoteCommand = new BotCommand("/promote","Изменить статус пользователя");
+        commandsAdmin.add(promoteCommand);
 
         try {
             telegramBotsApi.registerBot(this);
             this.execute(new SetMyCommands(commandList, new BotCommandScopeDefault(), null));
+            this.execute(new SetMyCommands(commandsAdmin,botCommandScopeChat,null));
             log.info("Меню установлено");
         } catch (TelegramApiException e) {
             log.error("Произошла ошибка при запуске бота: {}", e.getMessage());
