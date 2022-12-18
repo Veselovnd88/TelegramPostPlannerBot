@@ -1,5 +1,6 @@
 package ru.veselov.plannerBot.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 public class PostService {
     private final MyPreciousBot bot;
@@ -81,6 +83,7 @@ public class PostService {
             PostEntity savedPost = postRepository.save(postEntity);
             if(savedPost.getPostState()==PostState.PLANNED){
                 PostSenderTask postSenderTask = new PostSenderTask(bot, convertToPost(savedPost), this, postSender);
+                log.info("Пост № {} запланирован к отправке на {}", postDto.getPostId(), postDto.getDate());
                 new Timer().schedule(postSenderTask, postDto.getDate());
             }
         }
@@ -93,6 +96,11 @@ public class PostService {
 
     public List<Post> todayPosts(Date dateUntil, PostState postState){
         return postRepository.findByDateBeforeAndPostState(dateUntil, postState).stream()
+                .map(this::convertToPost).toList();
+    }
+
+    public List<Post> getPostsByState(PostState postState){
+        return postRepository.findByPostState(postState).stream()
                 .map(this::convertToPost).toList();
     }
 

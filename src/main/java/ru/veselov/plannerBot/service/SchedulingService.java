@@ -12,6 +12,7 @@ import ru.veselov.plannerBot.controller.BotState;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 
 @Slf4j
@@ -29,6 +30,17 @@ public class SchedulingService {
         this.postService = postService;
         this.userDataCache = userDataCache;
     }
+    @PostConstruct
+    public void checkPlanned(){
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeZone(tz);
+        log.info("Проверяю посты со статусом PLANNED");
+        //Проверяются все посты со статусом PLANNED, которые не были отправлены
+        List<Post> planned = postService.getPostsByState(PostState.PLANNED);
+        for(Post post:planned){
+            postService.planPost(post);
+        }
+    }
 
     @Scheduled(cron = "${bot.period}",zone = "Europe/Moscow")//секунда 0, минута 0 каждые 6 часов
     public void scheduledTask(){
@@ -37,12 +49,6 @@ public class SchedulingService {
         calendar.setTimeZone(tz);
         log.info("Проверяю хранилище постов и назначаю в очереди в {}", calendar.getTime());
         calendar.add(Calendar.DATE, 1);
-        //Проверяются все посты со статусом PLANNED, которые не были отправлены
-        List<Post> planned = postService.todayPosts(new Date(), PostState.PLANNED);
-        for(Post post:planned){
-            postService.planPost(post);
-        }
-
         List<Post> today = postService.todayPosts(calendar.getTime(), PostState.SAVED);
             for(Post post:today){
                 postService.planPost(post);
