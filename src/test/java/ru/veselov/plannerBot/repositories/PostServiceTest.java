@@ -3,6 +3,7 @@ package ru.veselov.plannerBot.repositories;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -84,6 +85,7 @@ public class PostServiceTest {
     }
 
     @Test
+    @Disabled
     void planPostPlan() throws ParseException {
         PostState postState = PostState.CREATED;
         Date postDateActual = sdf.parse("05.12.2022 17 25");
@@ -101,6 +103,7 @@ public class PostServiceTest {
 
 
     @Test
+    @Disabled
     void planPostSave() throws ParseException {
         PostState postState = PostState.CREATED;
         Date postDateSaved = sdf.parse("05.12.2023 17 25");//через год
@@ -117,6 +120,7 @@ public class PostServiceTest {
     }
 
     @Test
+    @Disabled
     void planPostGetSavedAndPlan() throws ParseException {
         PostState postState = PostState.SAVED;
         Date postDatePlanned = sdf.parse("05.12.2022 17 25");//через год
@@ -133,6 +137,7 @@ public class PostServiceTest {
     }
 
     @Test
+    @Disabled
     void planPostGetSavedAndStaySaved() throws ParseException {//с такой датой сюда не пост просто не должен попадать
         PostState postState = PostState.SAVED;
         Date postDatePlanned = sdf.parse("05.12.2023 17 25");//через год
@@ -149,6 +154,7 @@ public class PostServiceTest {
     }
 
     @Test
+    @Disabled
     public void testService(){
         post.setPostState(PostState.CREATED);
         postService.planPost(post);
@@ -161,6 +167,7 @@ public class PostServiceTest {
     }
 
     @Test
+    @Disabled
     public void testPostContent(){
         post.setPostState(PostState.CREATED);
 

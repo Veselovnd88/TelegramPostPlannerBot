@@ -3,6 +3,7 @@ package ru.veselov.plannerBot.controller;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +29,6 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 class UpdateControllerFunctionTest {
 
-
-    private final Long botId = 5655105778L;
 
     @Autowired
     private MyPreciousBot bot;
@@ -84,11 +83,13 @@ class UpdateControllerFunctionTest {
     }
     /*Проверка сохранения, удаления канала, когда приходит update с присоединением/отсоединением бота*/
     @Test
+    @Disabled
     void processUpdateWhenAddingBotBotId(){
         when(mockUpdate.hasMyChatMember()).thenReturn(true);
         when(mockUpdate.getMyChatMember()).thenReturn(myChatMember);
         when(myChatMember.getNewChatMember()).thenReturn(mockChatMember);
         when(mockChatMember.getUser()).thenReturn(mockUser);
+        Long botId = 0L;//Для тестирования вставить реальный ID бота
         when(mockUser.getId()).thenReturn(botId);
         when(myChatMember.getChat()).thenReturn(mockChat);
         when(mockChat.getTitle()).thenReturn("Mock Chat Title");

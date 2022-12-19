@@ -2,6 +2,7 @@ package ru.veselov.plannerBot.controller;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +33,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
+@Disabled
 public class UpdateControllerTest {
-    private final static Long botId = 5655105778L;
+    private final static Long botId = 0L;//тестируется с реальным ID бота
     @Autowired
     private MyPreciousBot bot;
     @Autowired
