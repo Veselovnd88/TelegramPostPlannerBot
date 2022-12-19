@@ -111,6 +111,7 @@ public class PostService {
         if(postEntity.isPresent()){
             PostEntity get = postEntity.get();
             get.setPostState(PostState.SENT);
+            get.setDate(post.getDate());
             postRepository.save(get);
         }
     }

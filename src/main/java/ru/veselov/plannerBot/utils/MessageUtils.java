@@ -11,6 +11,7 @@ public class MessageUtils {
     public static final String SHOW = EmojiParser.parseToUnicode(":mag:Предпросмотр поста:mag_right:");
     public static final String POST_ID_ERROR = EmojiParser.parseToUnicode(":disappointed:Поста с таким ID не существует," +
             "повторите ввод, или выберите любую команду");
+    public static final String POST_SENT = EmojiParser.parseToUnicode("Пост отправлен:grinning:");
     public static String HELP_MESSAGE = EmojiParser.parseToUnicode("""
             :raised_hand:Я бот для планирования постов и публикации в канал\s
             :arrow_backward:Для начала работы и первых инструкций нажмите /start в разделе меню слева\s

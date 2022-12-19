@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.UserDataCache;
 import ru.veselov.plannerBot.controller.handlers.CommandMenuHandler;
@@ -35,7 +36,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @Disabled
 public class UpdateControllerTest {
-    private final static Long botId = 0L;//тестируется с реальным ID бота
+    private Long botId = 0L;//тестируется с реальным ID бота
     @Autowired
     private MyPreciousBot bot;
     @Autowired
@@ -261,7 +262,12 @@ public class UpdateControllerTest {
         updateController.processUpdate(mockUpdate);
     }
 
-    private void userAddToChannels(User user){
+    private void userAddToChannels(User user) {
+        try {
+            botId = bot.getMe().getId();
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
         when(mockUpdate.hasMessage()).thenReturn(false);
         when(mockUpdate.hasMyChatMember()).thenReturn(true);

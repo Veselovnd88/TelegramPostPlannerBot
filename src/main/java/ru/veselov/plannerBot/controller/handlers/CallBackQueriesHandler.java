@@ -16,6 +16,7 @@ import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.service.postsender.PostSender;
 import ru.veselov.plannerBot.utils.MessageUtils;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -116,6 +117,22 @@ public class CallBackQueriesHandler implements UpdateHandler{
                         return new SendMessage(userId.toString(),"Пост не найден");
                     }
 
+                }
+                //отправить прямо сейчас
+                if(data.equals("send")){
+                    Optional<Post> post = postService.findById(userDataCache.getPostForManage(userId));
+                    if(post.isPresent()){
+                        Post postToSend = post.get();
+                        postToSend.setDate(new Date());
+                        postService.planPost(postToSend);
+                        SendMessage message = new SendMessage(userId.toString(), MessageUtils.POST_SENT);
+                        userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
+                        return message;
+                    }
+                    else{
+                        userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
+                        return new SendMessage(userId.toString(),"Пост не найден");
+                    }
                 }
 
         }
