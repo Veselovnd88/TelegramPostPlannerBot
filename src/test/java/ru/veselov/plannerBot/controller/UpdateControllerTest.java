@@ -37,6 +37,7 @@ import static org.mockito.Mockito.when;
 @Disabled
 public class UpdateControllerTest {
     private Long botId = 0L;//тестируется с реальным ID бота
+
     @Autowired
     private MyPreciousBot bot;
     @Autowired
