@@ -78,7 +78,7 @@ public class CallBackQueriesHandler implements UpdateHandler{
                                             MessageUtils.AWAITING_DATE);
                             log.info("Посты сохранены для публикации в каналах {}", chats.stream().
                                     map(Chat::getTitle).map(MessageUtils::shortenString).toList());
-                            userDataCache.setUserBotState(userId,BotState.AWAITING_DATE);
+                            userDataCache.setUserBotState(userId,BotState.AWAITING_DATE);//TODO предложить клавиатуру для ввода даты
                             return sendPictureMessage;
                     }
                     AnswerCallbackQuery unknownAnswer = new AnswerCallbackQuery();
@@ -161,7 +161,6 @@ public class CallBackQueriesHandler implements UpdateHandler{
         private ReplyKeyboardMarkup setKeyboardChosePostId(User user){
             List<Post> allPlanned = postService.findByUserAndPostStates(user,
                     List.of(PostState.SAVED,PostState.PLANNED));
-            System.out.println(allPlanned.size());
             List<KeyboardRow> keyboardRows = new ArrayList<>();
             KeyboardRow keyboardRow=new KeyboardRow();
             for (int i=1; i<=allPlanned.size(); i++){
@@ -171,13 +170,39 @@ public class CallBackQueriesHandler implements UpdateHandler{
                     keyboardRow= new KeyboardRow();
                 }
             }
-            System.out.println(keyboardRows.size());
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         replyKeyboardMarkup.setKeyboard(keyboardRows);
         replyKeyboardMarkup.setResizeKeyboard(true);
         replyKeyboardMarkup.setOneTimeKeyboard(false);
         return replyKeyboardMarkup;
         }
+
+    private ReplyKeyboardMarkup setKeyBoardChoseDate(){
+        Date date = new Date();
+        /*получаем id отправленного сообщения
+        * long message_id = update.getCallbackQuery().getMessage().getMessageId();
+        * далее делаем \EditMessageText new_message = new EditMessageText()
+                        .setChatId(chat_id)
+                        .setMessageId(toIntExact(message_id))
+                        .setText(answer)
+        *прикрепляем новые инлайн кнопки сделать либо выбор дат, также можно использовать для пагинации*/
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+        KeyboardRow keyboardRow=new KeyboardRow();
+        for (int i=1; i<=6; i++){
+            keyboardRow.add(new KeyboardButton("Дата"));
+            if(i%3==0){
+                keyboardRows.add(keyboardRow);
+                keyboardRow= new KeyboardRow();
+            }
+        }
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        replyKeyboardMarkup.setKeyboard(keyboardRows);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setOneTimeKeyboard(false);
+        return replyKeyboardMarkup;
+    }
+
+
 
         private SendMessage removeKeyBoard(SendMessage sendMessage){
             ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();

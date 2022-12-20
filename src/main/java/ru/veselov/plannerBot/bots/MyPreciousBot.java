@@ -75,7 +75,9 @@ public class MyPreciousBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        updateController.processUpdate(update);
+        if(update!=null){
+            updateController.processUpdate(update);
+        }
     }
 
 
