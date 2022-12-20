@@ -5,12 +5,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.veselov.plannerBot.cache.DataCache;
@@ -22,6 +27,7 @@ import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.service.postsender.PostSender;
 import ru.veselov.plannerBot.utils.MessageUtils;
 
+import javax.persistence.criteria.CriteriaBuilder;
 import java.util.*;
 
 @Component
@@ -73,13 +79,13 @@ public class CallBackQueriesHandler implements UpdateHandler{
                         for(Chat chat: chats){
                             post.getChats().add(chat);
                     }
-                    SendMessage sendPictureMessage =
+                    SendMessage awaitingDateMessage =
                                     new SendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
                                             MessageUtils.AWAITING_DATE);
                             log.info("Посты сохранены для публикации в каналах {}", chats.stream().
                                     map(Chat::getTitle).map(MessageUtils::shortenString).toList());
                             userDataCache.setUserBotState(userId,BotState.AWAITING_DATE);//TODO предложить клавиатуру для ввода даты
-                            return sendPictureMessage;
+                            return setKeyBoardChoseDate(awaitingDateMessage);
                     }
                     AnswerCallbackQuery unknownAnswer = new AnswerCallbackQuery();
                     unknownAnswer.setCallbackQueryId(update.getCallbackQuery().getId());
@@ -177,8 +183,30 @@ public class CallBackQueriesHandler implements UpdateHandler{
         return replyKeyboardMarkup;
         }
 
-    private ReplyKeyboardMarkup setKeyBoardChoseDate(){
-        Date date = new Date();
+    private SendMessage setKeyBoardChoseDate(SendMessage message){//FIXME возвращать keyboard и цеплять сразу к мессдж
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        var  today  = new InlineKeyboardButton();
+        Calendar calendar = Calendar.getInstance();
+        Locale locale = new Locale("ru");//FIXME перенести в отдельный класс
+        calendar.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));
+
+        String displayName = calendar.get(Calendar.DAY_OF_MONTH) +" "+ calendar.getDisplayName(Calendar.MONTH, Calendar.LONG, locale);
+        today.setText(displayName);
+        today.setCallbackData("chosenDay");
+        var dayLeftArrow = new InlineKeyboardButton();
+        dayLeftArrow.setText("<<");
+        dayLeftArrow.setCallbackData("dayLeft");
+        var dayRightArrow = new InlineKeyboardButton();
+        dayRightArrow.setText(">>");
+        dayRightArrow.setCallbackData("dayRight");
+        List<InlineKeyboardButton> rowDay = new ArrayList<>(List.of(dayLeftArrow, today, dayRightArrow));
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        rows.add(rowDay);
+        inlineKeyboardMarkup.setKeyboard(rows);
+        message.setReplyMarkup(inlineKeyboardMarkup);
+        return message;
+
+
         /*получаем id отправленного сообщения
         * long message_id = update.getCallbackQuery().getMessage().getMessageId();
         * далее делаем \EditMessageText new_message = new EditMessageText()
@@ -186,20 +214,6 @@ public class CallBackQueriesHandler implements UpdateHandler{
                         .setMessageId(toIntExact(message_id))
                         .setText(answer)
         *прикрепляем новые инлайн кнопки сделать либо выбор дат, также можно использовать для пагинации*/
-        List<KeyboardRow> keyboardRows = new ArrayList<>();
-        KeyboardRow keyboardRow=new KeyboardRow();
-        for (int i=1; i<=6; i++){
-            keyboardRow.add(new KeyboardButton("Дата"));
-            if(i%3==0){
-                keyboardRows.add(keyboardRow);
-                keyboardRow= new KeyboardRow();
-            }
-        }
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        replyKeyboardMarkup.setKeyboard(keyboardRows);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        replyKeyboardMarkup.setOneTimeKeyboard(false);
-        return replyKeyboardMarkup;
     }
 
 
@@ -208,6 +222,7 @@ public class CallBackQueriesHandler implements UpdateHandler{
             ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
             replyKeyboardRemove.setRemoveKeyboard(true);
             replyKeyboardRemove.setSelective(true);
+            sendMessage.enableMarkdown(true);
             sendMessage.setReplyMarkup(replyKeyboardRemove);
             return sendMessage;
         }
