@@ -78,6 +78,7 @@ public class CommandMenuHandler implements UpdateHandler {
                 if(userDataCache.getUsersBotState(userId)!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
                     reset(update);
                 }
+                userDataCache.setUserBotState(userId,BotState.VIEW);
                 return viewModeMessage(update);
 
             case "/reset":

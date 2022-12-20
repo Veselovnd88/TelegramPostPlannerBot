@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.veselov.plannerBot.cache.DataCache;
@@ -97,12 +98,14 @@ public class CallBackQueriesHandler implements UpdateHandler{
                     return answerCallbackQuery;
             }
             case MANAGE:
+                //удаление поста
                 if(data.equals("delete")){
                     postService.deleteById(userDataCache.getPostForManage(userId));
                     SendMessage message = new SendMessage(userId.toString(),MessageUtils.DELETED);
                     userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                    return message;
+                    return removeKeyBoard(message);
                 }
+                //просмотр поста
                 if(data.equals("view")){
                     Optional<Post> post = postService.findById(userDataCache.getPostForManage(userId));
                     if(post.isPresent()){
@@ -112,13 +115,12 @@ public class CallBackQueriesHandler implements UpdateHandler{
                         postSender.send(post.get());
                         SendMessage message = new SendMessage(userId.toString(),MessageUtils.SHOW);
                         userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                        return message;
+                        return removeKeyBoard(message);
                     }
                     else{
                         userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
                         return new SendMessage(userId.toString(),"Пост не найден");
                     }
-
                 }
                 //отправить прямо сейчас
                 if(data.equals("send")){
@@ -129,24 +131,26 @@ public class CallBackQueriesHandler implements UpdateHandler{
                         postService.planPost(postToSend);
                         SendMessage message = new SendMessage(userId.toString(), MessageUtils.POST_SENT);
                         userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                        return message;
+                        return removeKeyBoard(message);
+
                     }
                     else{
                         userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                        return new SendMessage(userId.toString(),"Пост не найден");
+                        return removeKeyBoard(new SendMessage(userId.toString(),"Пост не найден"));
                     }
                 }
-
+            case VIEW:
+                if(data.equals("manage")){
+                    userDataCache.setUserBotState(userId,BotState.MANAGE);
+                    ReplyKeyboardMarkup replyKeyboardMarkup = setKeyboardChosePostId(update.getCallbackQuery().getFrom());
+                    SendMessage sendMessage = new SendMessage(userId.toString(),
+                            "Введите или выберите из списка ID поста для управления");
+                    sendMessage.setReplyMarkup(replyKeyboardMarkup);
+                    sendMessage.setReplyMarkup(replyKeyboardMarkup);
+                    return sendMessage;
+                }
         }
-        if(data.equals("manage")){
-            userDataCache.setUserBotState(userId,BotState.MANAGE);
-            ReplyKeyboardMarkup replyKeyboardMarkup = setKeyboardChosePostId(update.getCallbackQuery().getFrom());
 
-            SendMessage sendMessage = new SendMessage(userId.toString(),
-                    "Введите ID поста который вы хотите удалить или просмотреть");//или выберите из списка
-            sendMessage.setReplyMarkup(replyKeyboardMarkup);
-            return sendMessage;
-        }
         AnswerCallbackQuery botIsBusyMessage = new AnswerCallbackQuery();
         botIsBusyMessage.setCallbackQueryId(update.getCallbackQuery().getId());
         botIsBusyMessage.setText(MessageUtils.DONT_AWAIT_CONTENT);
@@ -157,21 +161,30 @@ public class CallBackQueriesHandler implements UpdateHandler{
         private ReplyKeyboardMarkup setKeyboardChosePostId(User user){
             List<Post> allPlanned = postService.findByUserAndPostStates(user,
                     List.of(PostState.SAVED,PostState.PLANNED));
+            System.out.println(allPlanned.size());
             List<KeyboardRow> keyboardRows = new ArrayList<>();
             KeyboardRow keyboardRow=new KeyboardRow();
-            for (int i=0; i<allPlanned.size(); i++){
-                if(i!=0 &&i%5==0){
+            for (int i=1; i<=allPlanned.size(); i++){
+                keyboardRow.add(new KeyboardButton(String.valueOf(allPlanned.get(i-1).getPostId())));
+                if(i%7==0 || i==(allPlanned.size())){
                     keyboardRows.add(keyboardRow);
-                    keyboardRow = new KeyboardRow();
+                    keyboardRow= new KeyboardRow();
                 }
-                keyboardRow.add(new KeyboardButton(String.valueOf(allPlanned.get(i).getPostId())));
             }
+            System.out.println(keyboardRows.size());
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         replyKeyboardMarkup.setKeyboard(keyboardRows);
         replyKeyboardMarkup.setResizeKeyboard(true);
         replyKeyboardMarkup.setOneTimeKeyboard(false);
         return replyKeyboardMarkup;
+        }
 
+        private SendMessage removeKeyBoard(SendMessage sendMessage){
+            ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
+            replyKeyboardRemove.setRemoveKeyboard(true);
+            replyKeyboardRemove.setSelective(true);
+            sendMessage.setReplyMarkup(replyKeyboardRemove);
+            return sendMessage;
         }
 }
 
