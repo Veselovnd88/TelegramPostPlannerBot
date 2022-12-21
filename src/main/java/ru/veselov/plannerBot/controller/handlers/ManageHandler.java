@@ -6,6 +6,7 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.service.PostService;
@@ -72,5 +73,13 @@ public class ManageHandler implements UpdateHandler{
         message.setChatId(userId);
         message.setText("Пост "+userDataCache.getPostForManage(userId));
         return message;
+    }
+    private SendMessage removeKeyBoard(SendMessage sendMessage){
+        ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
+        replyKeyboardRemove.setRemoveKeyboard(true);
+        replyKeyboardRemove.setSelective(true);
+        sendMessage.enableMarkdown(true);
+        sendMessage.setReplyMarkup(replyKeyboardRemove);
+        return sendMessage;
     }
 }

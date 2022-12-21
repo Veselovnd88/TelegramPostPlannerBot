@@ -22,43 +22,47 @@ import static ru.veselov.plannerBot.utils.MessageUtils.AWAITING_DATE;
 
 @Component
 @Slf4j
-public class ChoseDateHandler implements UpdateHandler{
-
+public class ChooseDateHandler implements UpdateHandler{
 
     private final Locale locale = new Locale("ru");
 
     private final DataCache userDataCache;
     @Autowired
-    public ChoseDateHandler(DataCache userDataCache) {
+    public ChooseDateHandler(DataCache userDataCache) {
         this.userDataCache = userDataCache;
     }
 
 
     @Override
     public BotApiMethod<?> processUpdate(Update update) {
-        Long userId = update.getCallbackQuery().getFrom().getId();
+        Long userId=null;
+        if(update.hasCallbackQuery()){
+            userId = update.getCallbackQuery().getFrom().getId();
+        }
+        else if (update.hasMessage()){
+            userId = update.getMessage().getFrom().getId();
+        }
         BotState botState = userDataCache.getUsersBotState(userId);
         switch (botState){
             case AWAITING_POST:
                 SendMessage awaitingDateMessage =
                         new SendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
                                 AWAITING_DATE);
-                userDataCache.setUserBotState(userId, BotState.AWAITING_DATE);//TODO предложить клавиатуру для ввода даты
+                userDataCache.setUserBotState(userId, BotState.AWAITING_DATE);
                 //получили текущую дату и время, передали в клавиатуру для показа пользователю, от нее будет шагать влево и вправо
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));
-
                 String displayName = getDisplayDate(calendar);
                 String displayTime = getDisplayTime(calendar);
                 //поместили в кеш, для сверки с переходом по стрелочкам
                 userDataCache.getSavedDate().put(userId,calendar);
                 userDataCache.getStartedDate().put(userId,calendar.getTime());
+                awaitingDateMessage.enableMarkdown(true);
                 awaitingDateMessage.setReplyMarkup(setKeyBoardChoseDate(displayName, displayTime));
                 return awaitingDateMessage;
 
 
             case AWAITING_DATE:
-
                 if(update.hasMessage()&&update.getMessage().hasText()){
                     SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH mm");
                 try {
@@ -70,14 +74,12 @@ public class ChoseDateHandler implements UpdateHandler{
                     }
                 }
 
-
                 String rawData = update.getCallbackQuery().getData();
                 String data = rawData.split(":")[0];
                 Calendar refCalendar = userDataCache.getSavedDate().get(userId);
                 switch (data){
                     case "chosenDay":
-                        System.out.println(data+ rawData.split(":")[1]);
-                        return savePostAfterInputDate(update.getMessage().getChatId().toString(),
+                        return savePostAfterInputDate(update.getCallbackQuery().getFrom().getId().toString(),
                                 userDataCache.getSavedDate().get(userId).getTime(), userId);
                     case "dayLeft":
                         refCalendar.add(Calendar.DAY_OF_MONTH,-1);
@@ -138,10 +140,6 @@ public class ChoseDateHandler implements UpdateHandler{
                         return null;
 
                 }
-
-
-
-
         }
         return null;
     }
@@ -173,7 +171,7 @@ public class ChoseDateHandler implements UpdateHandler{
         ///////////////
         var time = new InlineKeyboardButton();
         time.setText(showTime);
-        time.setCallbackData("chosenTime:"+time.getText());//FIXME время в формате чтобы можно было спарсить
+        time.setCallbackData("chosenTime:"+time.getText());
         var timeLeftArrow = new InlineKeyboardButton();
         timeLeftArrow.setText("<<");
         timeLeftArrow.setCallbackData("timeLeft");
@@ -185,15 +183,6 @@ public class ChoseDateHandler implements UpdateHandler{
         ////////
         inlineKeyboardMarkup.setKeyboard(rows);
         return inlineKeyboardMarkup;
-
-
-        /*получаем id отправленного сообщения
-        * long message_id = update.getCallbackQuery().getMessage().getMessageId();
-        * далее делаем \EditMessageText new_message = new EditMessageText()
-                        .setChatId(chat_id)
-                        .setMessageId(toIntExact(message_id))
-                        .setText(answer)
-        *прикрепляем новые инлайн кнопки сделать либо выбор дат, также можно использовать для пагинации*/
     }
 
 
@@ -214,15 +203,19 @@ public class ChoseDateHandler implements UpdateHandler{
         saveQuestion.setChatId(chatId);
         saveQuestion.setText("Готов сохранить пост");
         saveQuestion.enableMarkdown(true);
-
-        InlineKeyboardButton pictureYes = new InlineKeyboardButton();
-        pictureYes.setText("Сохранить");
-        pictureYes.setCallbackData("saveYes");//TODO вторую кнопку изменить дату
-        List<InlineKeyboardButton> row1 = new ArrayList<>(List.of(pictureYes));
+        InlineKeyboardButton saveButton = new InlineKeyboardButton();
+        saveButton.setText("Сохранить");
+        saveButton.setCallbackData("saveYes");
+        InlineKeyboardButton inputDate = new InlineKeyboardButton();
+        inputDate.setText("Выбрать другое время");
+        inputDate.setCallbackData("inputDate");
+        List<InlineKeyboardButton> row1 = new ArrayList<>(List.of(saveButton));
+        List<InlineKeyboardButton> row2 = new ArrayList<>(List.of(inputDate));
 
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
         rowList.add(row1);
+        rowList.add(row2);
         inlineKeyboardMarkup.setKeyboard(rowList);
         saveQuestion.setReplyMarkup(inlineKeyboardMarkup);
         return saveQuestion;

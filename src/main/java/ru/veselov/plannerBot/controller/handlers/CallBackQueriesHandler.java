@@ -31,14 +31,14 @@ public class CallBackQueriesHandler implements UpdateHandler{
     private final UserService userService;
     private final PostService postService;
     private final PostSender postSender;
-    private final ChoseDateHandler choseDateHandler;
+    private final ChooseDateHandler chooseDateHandler;
     @Autowired
-    public CallBackQueriesHandler(DataCache userDataCache, UserService userService, PostService postService, PostSender postSender, ChoseDateHandler choseDateHandler) {
+    public CallBackQueriesHandler(DataCache userDataCache, UserService userService, PostService postService, PostSender postSender, ChooseDateHandler chooseDateHandler) {
         this.userDataCache = userDataCache;
         this.userService = userService;
         this.postService = postService;
         this.postSender = postSender;
-        this.choseDateHandler = choseDateHandler;
+        this.chooseDateHandler = chooseDateHandler;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class CallBackQueriesHandler implements UpdateHandler{
                             log.info("Посты пользователя {} сохранены для публикации в каналах {}",userId,
                                     chats.stream().
                                     map(Chat::getTitle).map(MessageUtils::shortenString).toList());
-                            return choseDateHandler.processUpdate(update);
+                            return chooseDateHandler.processUpdate(update);
                     }
                 else if(data.equals("postAll")){
                         for(Chat chat: chats){
@@ -71,28 +71,30 @@ public class CallBackQueriesHandler implements UpdateHandler{
                     }
                             log.info("Посты сохранены для публикации в каналах {}", chats.stream().
                                     map(Chat::getTitle).map(MessageUtils::shortenString).toList());
-                            return choseDateHandler.processUpdate(update);
+                            return chooseDateHandler.processUpdate(update);
                     }
-                AnswerCallbackQuery unknownAnswer = new AnswerCallbackQuery();
-                unknownAnswer.setCallbackQueryId(update.getCallbackQuery().getId());
-                unknownAnswer.setText(MessageUtils.INLINE_BUTTON_WITH_UNKNOWN_DATA);
-                unknownAnswer.setShowAlert(true);
-                return unknownAnswer;
+                return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
+                        .text(MessageUtils.INLINE_BUTTON_WITH_UNKNOWN_DATA).showAlert(true).build();
 
             case AWAITING_DATE:
-                return choseDateHandler.processUpdate(update);
+                return chooseDateHandler.processUpdate(update);
 
-            case READY_TO_SAVE://FIXME READY_TO_SAVE
+            case READY_TO_SAVE:
                 if(data.equals("saveYes")) {
                     userDataCache.saveToRepository(userId);
+                    userDataCache.getSavedDate().remove(userId);
+                    userDataCache.getStartedDate().remove(userId);
                     log.info("Пост сохранены в базу для пользователя {}",userId);
-                    AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
-                    answerCallbackQuery.setCallbackQueryId(update.getCallbackQuery().getId());
-                    answerCallbackQuery.setText(MessageUtils.POST_SAVED);
-                    answerCallbackQuery.setShowAlert(true);
-                    answerCallbackQuery.setCacheTime(10);
-                    return answerCallbackQuery;
-            }
+                    return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
+                            .text(MessageUtils.POST_SAVED)
+                            .showAlert(true).cacheTime(10)
+                            .build();
+                }
+                if(data.equals("inputDate")){
+                    userDataCache.setUserBotState(userId,BotState.AWAITING_POST);
+                    log.info("Продолжаем выбирать дату");
+                    return chooseDateHandler.processUpdate(update);
+                }
             case MANAGE:
                 //удаление поста
                 if(data.equals("delete")){
@@ -128,20 +130,20 @@ public class CallBackQueriesHandler implements UpdateHandler{
                         SendMessage message = new SendMessage(userId.toString(), MessageUtils.POST_SENT);
                         userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
                         return removeKeyBoard(message);
-
+                        }
                     }
-                    else{
-                        userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                        return removeKeyBoard(new SendMessage(userId.toString(),"Пост не найден"));
-                    }
+                else{
+                    userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
+                    return removeKeyBoard(new SendMessage(userId.toString(),"Пост не найден"));
                 }
+
+
             case VIEW:
                 if(data.equals("manage")){
                     userDataCache.setUserBotState(userId,BotState.MANAGE);
                     ReplyKeyboardMarkup replyKeyboardMarkup = setKeyboardChosePostId(update.getCallbackQuery().getFrom());
                     SendMessage sendMessage = new SendMessage(userId.toString(),
                             "Введите или выберите из списка ID поста для управления");
-                    sendMessage.setReplyMarkup(replyKeyboardMarkup);
                     sendMessage.setReplyMarkup(replyKeyboardMarkup);
                     return sendMessage;
                 }
@@ -172,10 +174,6 @@ public class CallBackQueriesHandler implements UpdateHandler{
         replyKeyboardMarkup.setOneTimeKeyboard(false);
         return replyKeyboardMarkup;
         }
-
-
-
-
 
         private SendMessage removeKeyBoard(SendMessage sendMessage){
             ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();

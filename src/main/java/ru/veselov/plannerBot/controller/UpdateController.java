@@ -24,6 +24,7 @@ public class UpdateController {
     private final MyPreciousBot bot;
     private final CreatePostHandler createPostHandler;
     private final AddDataHandler addDataHandler;
+    private final ChooseDateHandler chooseDateHandler;
     private final CallBackQueriesHandler callBackQueriesHandler;
     private final CommandMenuHandler commandMenuHandler;
     private final ManageHandler manageHandler;
@@ -34,10 +35,11 @@ public class UpdateController {
 
     @Autowired
     public UpdateController(CreatePostHandler createPostHandler, MyPreciousBot myPreciousBot,
-                            AddDataHandler addDataHandler, CallBackQueriesHandler callBackQueriesHandler, CommandMenuHandler commandMenuHandler,
+                            AddDataHandler addDataHandler, ChooseDateHandler chooseDateHandler, CallBackQueriesHandler callBackQueriesHandler, CommandMenuHandler commandMenuHandler,
                             ManageHandler manageHandler, DataCache userDataCache, UserService userService) {
         this.createPostHandler = createPostHandler;
         this.addDataHandler = addDataHandler;
+        this.chooseDateHandler = chooseDateHandler;
         this.callBackQueriesHandler = callBackQueriesHandler;
         this.commandMenuHandler = commandMenuHandler;
         this.bot = myPreciousBot;
@@ -113,7 +115,7 @@ public class UpdateController {
                     }
                 if(userDataCache.getUsersBotState(userId)==BotState.AWAITING_DATE){
                     if((!isCommand(update.getMessage().getText()))) {
-                        bot.sendMessageBot(addDataHandler.processUpdate(update));
+                        bot.sendMessageBot(chooseDateHandler.processUpdate(update));
                     }
                 }
         }
