@@ -14,6 +14,8 @@ import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.SetChatPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updates.SetWebhook;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.*;
@@ -87,6 +89,12 @@ public class MyPreciousBot extends TelegramLongPollingBot {
                 if(sendMessage instanceof SendMessage){
                     execute(sendMessage);}
                 if(sendMessage instanceof AnswerCallbackQuery){
+                    execute(sendMessage);
+                }
+                if(sendMessage instanceof EditMessageText){
+                    execute(sendMessage);
+                }
+                if(sendMessage instanceof EditMessageReplyMarkup){
                     execute(sendMessage);
                 }
             }catch (TelegramApiException e){

@@ -112,7 +112,7 @@ public class UpdateController {
                         }
                     }
                 if(userDataCache.getUsersBotState(userId)==BotState.AWAITING_DATE){
-                    if((update.getMessage().hasText()&&!isCommand(update.getMessage().getText()))) {
+                    if((!isCommand(update.getMessage().getText()))) {
                         bot.sendMessageBot(addDataHandler.processUpdate(update));
                     }
                 }

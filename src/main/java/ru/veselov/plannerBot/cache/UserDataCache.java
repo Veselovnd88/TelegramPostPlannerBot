@@ -10,6 +10,8 @@ import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.service.PostCreator;
 import ru.veselov.plannerBot.service.PostService;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +25,17 @@ public class UserDataCache implements DataCache {
     private final Map<Long, BotState> botStates = new HashMap<>();
 
     private final Map<Long,Integer> postForManage = new HashMap<>();
+
+    public Map<Long, Calendar> getSavedDate() {
+        return savedDate;
+    }
+
+    public Map<Long, Date> getStartedDate() {
+        return startedDate;
+    }
+
+    private final Map<Long, Calendar> savedDate = new HashMap<>();
+    private final Map<Long, Date> startedDate = new HashMap<>();
 
     @Autowired
     public UserDataCache(PostService postService) {

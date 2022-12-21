@@ -5,17 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Chat;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.veselov.plannerBot.cache.DataCache;
@@ -27,7 +22,6 @@ import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.service.postsender.PostSender;
 import ru.veselov.plannerBot.utils.MessageUtils;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import java.util.*;
 
 @Component
@@ -37,12 +31,14 @@ public class CallBackQueriesHandler implements UpdateHandler{
     private final UserService userService;
     private final PostService postService;
     private final PostSender postSender;
+    private final ChoseDateHandler choseDateHandler;
     @Autowired
-    public CallBackQueriesHandler(DataCache userDataCache, UserService userService, PostService postService, PostSender postSender) {
+    public CallBackQueriesHandler(DataCache userDataCache, UserService userService, PostService postService, PostSender postSender, ChoseDateHandler choseDateHandler) {
         this.userDataCache = userDataCache;
         this.userService = userService;
         this.postService = postService;
         this.postSender = postSender;
+        this.choseDateHandler = choseDateHandler;
     }
 
     @Override
@@ -57,42 +53,36 @@ public class CallBackQueriesHandler implements UpdateHandler{
                 Set<Chat> chats= userService.findAllChatsByUser(update.getCallbackQuery().getFrom());
                 List<String> names = chats.stream()
                         .map(x-> (MessageUtils.shortenString(x.getTitle()))).toList();
+                Post processedPost = userDataCache.getPostCreator(userId).getPost();
                 if(names.contains(data)) {
                     for (Chat chat : chats) {
                         if (chat.getTitle().equals(data)) {
-                            //Отправляем Пост и чат в сервис - для связки, т.к. тут не транзакционный метод
-                            Post post = userDataCache.getPostCreator(userId).getPost();
-                            post.getChats().add(chat);
+                            processedPost.getChats().add(chat);
                         }
                             }
-                            SendMessage sendPictureMessage =
-                                    new SendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
-                                            MessageUtils.AWAITING_DATE);
                             log.info("Посты пользователя {} сохранены для публикации в каналах {}",userId,
                                     chats.stream().
                                     map(Chat::getTitle).map(MessageUtils::shortenString).toList());
-                            userDataCache.setUserBotState(userId,BotState.AWAITING_DATE);
-                            return sendPictureMessage;
+                            return choseDateHandler.processUpdate(update);
                     }
-                    else if(data.equals("postAll")){
-                        Post post = userDataCache.getPostCreator(userId).getPost();
+                else if(data.equals("postAll")){
                         for(Chat chat: chats){
-                            post.getChats().add(chat);
+                            processedPost.getChats().add(chat);
                     }
-                    SendMessage awaitingDateMessage =
-                                    new SendMessage(update.getCallbackQuery().getMessage().getChatId().toString(),
-                                            MessageUtils.AWAITING_DATE);
                             log.info("Посты сохранены для публикации в каналах {}", chats.stream().
                                     map(Chat::getTitle).map(MessageUtils::shortenString).toList());
-                            userDataCache.setUserBotState(userId,BotState.AWAITING_DATE);//TODO предложить клавиатуру для ввода даты
-                            return setKeyBoardChoseDate(awaitingDateMessage);
+                            return choseDateHandler.processUpdate(update);
                     }
-                    AnswerCallbackQuery unknownAnswer = new AnswerCallbackQuery();
-                    unknownAnswer.setCallbackQueryId(update.getCallbackQuery().getId());
-                    unknownAnswer.setText(MessageUtils.INLINE_BUTTON_WITH_UNKNOWN_DATA);
-                    unknownAnswer.setShowAlert(true);
-                    return unknownAnswer;
+                AnswerCallbackQuery unknownAnswer = new AnswerCallbackQuery();
+                unknownAnswer.setCallbackQueryId(update.getCallbackQuery().getId());
+                unknownAnswer.setText(MessageUtils.INLINE_BUTTON_WITH_UNKNOWN_DATA);
+                unknownAnswer.setShowAlert(true);
+                return unknownAnswer;
+
             case AWAITING_DATE:
+                return choseDateHandler.processUpdate(update);
+
+            case READY_TO_SAVE://FIXME READY_TO_SAVE
                 if(data.equals("saveYes")) {
                     userDataCache.saveToRepository(userId);
                     log.info("Пост сохранены в базу для пользователя {}",userId);
@@ -183,38 +173,7 @@ public class CallBackQueriesHandler implements UpdateHandler{
         return replyKeyboardMarkup;
         }
 
-    private SendMessage setKeyBoardChoseDate(SendMessage message){//FIXME возвращать keyboard и цеплять сразу к мессдж
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        var  today  = new InlineKeyboardButton();
-        Calendar calendar = Calendar.getInstance();
-        Locale locale = new Locale("ru");//FIXME перенести в отдельный класс
-        calendar.setTimeZone(TimeZone.getTimeZone("Europe/Moscow"));
 
-        String displayName = calendar.get(Calendar.DAY_OF_MONTH) +" "+ calendar.getDisplayName(Calendar.MONTH, Calendar.LONG, locale);
-        today.setText(displayName);
-        today.setCallbackData("chosenDay");
-        var dayLeftArrow = new InlineKeyboardButton();
-        dayLeftArrow.setText("<<");
-        dayLeftArrow.setCallbackData("dayLeft");
-        var dayRightArrow = new InlineKeyboardButton();
-        dayRightArrow.setText(">>");
-        dayRightArrow.setCallbackData("dayRight");
-        List<InlineKeyboardButton> rowDay = new ArrayList<>(List.of(dayLeftArrow, today, dayRightArrow));
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-        rows.add(rowDay);
-        inlineKeyboardMarkup.setKeyboard(rows);
-        message.setReplyMarkup(inlineKeyboardMarkup);
-        return message;
-
-
-        /*получаем id отправленного сообщения
-        * long message_id = update.getCallbackQuery().getMessage().getMessageId();
-        * далее делаем \EditMessageText new_message = new EditMessageText()
-                        .setChatId(chat_id)
-                        .setMessageId(toIntExact(message_id))
-                        .setText(answer)
-        *прикрепляем новые инлайн кнопки сделать либо выбор дат, также можно использовать для пагинации*/
-    }
 
 
 

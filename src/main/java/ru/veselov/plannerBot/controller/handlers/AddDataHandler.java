@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import ru.veselov.plannerBot.cache.DataCache;
+import ru.veselov.plannerBot.controller.BotState;
 import ru.veselov.plannerBot.utils.MessageUtils;
 
 import java.text.ParseException;
@@ -35,6 +36,7 @@ public class AddDataHandler implements UpdateHandler {
                 Date date = sdf.parse(update.getMessage().getText());
                 userDataCache.getPostCreator(userId).getPost().setDate(date);
                 log.info("Установлена дата поста {} для пользователя {}", date.toString(), userId);
+                userDataCache.setUserBotState(userId, BotState.READY_TO_SAVE);
                 return savePostAfterInputDate(update.getMessage().getChatId().toString());
 
             } catch (ParseException e) {
@@ -44,6 +46,9 @@ public class AddDataHandler implements UpdateHandler {
 
     }
 
+
+
+
     public SendMessage savePostAfterInputDate(String chatId){
         SendMessage saveQuestion = new SendMessage();
         saveQuestion.setChatId(chatId);
@@ -52,7 +57,7 @@ public class AddDataHandler implements UpdateHandler {
 
         InlineKeyboardButton pictureYes = new InlineKeyboardButton();
         pictureYes.setText("Сохранить");
-        pictureYes.setCallbackData("saveYes");
+        pictureYes.setCallbackData("saveYes");//TODO вторую кнопку изменить дату
         List<InlineKeyboardButton> row1 = new ArrayList<>(List.of(pictureYes));
 
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
