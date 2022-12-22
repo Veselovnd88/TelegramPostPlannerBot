@@ -83,7 +83,7 @@ public class PostService {
             PostEntity savedPost = postRepository.save(postEntity);
             if(savedPost.getPostState()==PostState.PLANNED){
                 PostSenderTask postSenderTask = new PostSenderTask(bot, convertToPost(savedPost), this, postSender);
-                log.info("Пост № {} запланирован к отправке на {}", postDto.getPostId(), postDto.getDate());
+                log.info("Пост № {} запланирован к отправке на {}", savedPost.getPostId(), savedPost.getDate());
                 new Timer().schedule(postSenderTask, postDto.getDate());
             }
         }
