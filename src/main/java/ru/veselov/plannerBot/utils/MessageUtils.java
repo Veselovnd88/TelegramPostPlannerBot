@@ -10,7 +10,7 @@ public class MessageUtils {
     public static final String DELETED = EmojiParser.parseToUnicode(":fire:Пост удален:fire:");
     public static final String SHOW = EmojiParser.parseToUnicode(":mag:Предпросмотр поста:mag_right:");
     public static final String POST_ID_ERROR = EmojiParser.parseToUnicode(":disappointed:Поста с таким ID не существует," +
-            "повторите ввод, или выберите любую команду");
+            "повторите ввод, или выберите другую команду");
     public static final String POST_SENT = EmojiParser.parseToUnicode("Пост отправлен:grinning:");
     public static String HELP_MESSAGE = EmojiParser.parseToUnicode("""
             :raised_hand:Я бот для планирования постов и публикации в канал\s
@@ -36,7 +36,8 @@ public class MessageUtils {
 
     public static String INLINE_BUTTON_WITH_UNKNOWN_DATA=EmojiParser.parseToUnicode(":neutral_face:Нажата кнопка с неизвестным мне названием");
 
-    public static String AWAITING_DATE = EmojiParser.parseToUnicode(":date:Добавляем данные в пост, введите дату в формате dd.MM.yyyy HH mm");
+    public static String AWAITING_DATE = EmojiParser.parseToUnicode(":date:Добавляем данные в пост, выберите дату с помощью кнопок и кликните на клавишу Даты/времени" +
+            " или введите дату в формате dd.MM.yyyy HH mm");
     public static List<String> AVAILABLE_DATA_FORMATS = List.of("dd.MM.yyyy HH mm");
     public static String POST_SAVED = EmojiParser.parseToUnicode(":white_check_mark:Ваш пост сохранен");
 

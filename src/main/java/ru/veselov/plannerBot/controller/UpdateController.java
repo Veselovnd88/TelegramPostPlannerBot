@@ -23,7 +23,6 @@ public class UpdateController {
 
     private final MyPreciousBot bot;
     private final CreatePostHandler createPostHandler;
-    private final AddDataHandler addDataHandler;
     private final ChooseDateHandler chooseDateHandler;
     private final CallBackQueriesHandler callBackQueriesHandler;
     private final CommandMenuHandler commandMenuHandler;
@@ -35,10 +34,9 @@ public class UpdateController {
 
     @Autowired
     public UpdateController(CreatePostHandler createPostHandler, MyPreciousBot myPreciousBot,
-                            AddDataHandler addDataHandler, ChooseDateHandler chooseDateHandler, CallBackQueriesHandler callBackQueriesHandler, CommandMenuHandler commandMenuHandler,
+                            ChooseDateHandler chooseDateHandler, CallBackQueriesHandler callBackQueriesHandler, CommandMenuHandler commandMenuHandler,
                             ManageHandler manageHandler, DataCache userDataCache, UserService userService) {
         this.createPostHandler = createPostHandler;
-        this.addDataHandler = addDataHandler;
         this.chooseDateHandler = chooseDateHandler;
         this.callBackQueriesHandler = callBackQueriesHandler;
         this.commandMenuHandler = commandMenuHandler;

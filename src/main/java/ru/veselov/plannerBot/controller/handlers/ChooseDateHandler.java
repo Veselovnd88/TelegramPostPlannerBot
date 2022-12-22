@@ -27,6 +27,7 @@ public class ChooseDateHandler implements UpdateHandler{
     private final Locale locale = new Locale("ru");
 
     private final DataCache userDataCache;
+    private final SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH mm");
     @Autowired
     public ChooseDateHandler(DataCache userDataCache) {
         this.userDataCache = userDataCache;
@@ -61,26 +62,28 @@ public class ChooseDateHandler implements UpdateHandler{
                 awaitingDateMessage.setReplyMarkup(setKeyBoardChoseDate(displayName, displayTime));
                 return awaitingDateMessage;
 
-
             case AWAITING_DATE:
+                //проверка ручного ввода
                 if(update.hasMessage()&&update.getMessage().hasText()){
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH mm");
-                try {
-                    Date date = sdf.parse(update.getMessage().getText());
-                    return savePostAfterInputDate(update.getMessage().getChatId().toString(), date, userId);
+                    try {
+                        Date date = sdf.parse(update.getMessage().getText());
+                        return savePostAfterInputDate(update.getMessage().getChatId().toString(), date, userId);
 
-                } catch (ParseException e) {
-                    return new SendMessage(update.getMessage().getChatId().toString(), MessageUtils.AWAITING_DATE);
-                    }
+                    } catch (ParseException e) {
+                        return new SendMessage(update.getMessage().getChatId().toString(), MessageUtils.AWAITING_DATE);
+                        }
                 }
-
+                //коллбэки
                 String rawData = update.getCallbackQuery().getData();
                 String data = rawData.split(":")[0];
                 Calendar refCalendar = userDataCache.getSavedDate().get(userId);
                 switch (data){
+                    //Нажатие клавиши с отображением времени/даты - прикрепляет дату к посту
                     case "chosenDay":
+                    case "chosenTime":
                         return savePostAfterInputDate(update.getCallbackQuery().getFrom().getId().toString(),
                                 userDataCache.getSavedDate().get(userId).getTime(), userId);
+                    //клавиши управления датой и временем
                     case "dayLeft":
                         refCalendar.add(Calendar.DAY_OF_MONTH,-1);
                         if(refCalendar.getTime().before(userDataCache.getStartedDate().get(userId))){
@@ -90,11 +93,8 @@ public class ChooseDateHandler implements UpdateHandler{
                                     .showAlert(true).build();
                         }
                         userDataCache.getSavedDate().put(userId,refCalendar);
-                        return  EditMessageReplyMarkup.builder()
-                                .chatId(update.getCallbackQuery().getMessage().getChatId().toString())
-                                .messageId(update.getCallbackQuery().getMessage().getMessageId())
-                                .replyMarkup(setKeyBoardChoseDate(getDisplayDate(refCalendar),getDisplayTime(refCalendar)))
-                                .build();
+                        return  editMessage(update,refCalendar);
+
                     case "dayLeft7":
                         refCalendar.add(Calendar.DAY_OF_MONTH,-7);
                         if(refCalendar.getTime().before(new Date())){
@@ -104,53 +104,76 @@ public class ChooseDateHandler implements UpdateHandler{
                                     .showAlert(true).build();
                         }
                         userDataCache.getSavedDate().put(userId,refCalendar);
-                        return  EditMessageReplyMarkup.builder()
-                                .chatId(update.getCallbackQuery().getMessage().getChatId().toString())
-                                .messageId(update.getCallbackQuery().getMessage().getMessageId())
-                                .replyMarkup(setKeyBoardChoseDate(getDisplayDate(refCalendar),getDisplayTime(refCalendar)))
-                                .build();
+                        return  editMessage(update,refCalendar);
+
                     case "dayRight":
                         refCalendar.add(Calendar.DAY_OF_MONTH,+1);
                         userDataCache.getSavedDate().put(userId,refCalendar);
-                        return  EditMessageReplyMarkup.builder()
-                                .chatId(update.getCallbackQuery().getMessage().getChatId().toString())
-                                .messageId(update.getCallbackQuery().getMessage().getMessageId())
-                                .replyMarkup(setKeyBoardChoseDate(getDisplayDate(refCalendar),getDisplayTime(refCalendar)))
-                                .build();
+                        return  editMessage(update,refCalendar);
+
                     case "dayRight7":
+
                         refCalendar.add(Calendar.DAY_OF_MONTH,+7);
                         userDataCache.getSavedDate().put(userId,refCalendar);
-                        return  EditMessageReplyMarkup.builder()
-                                .chatId(update.getCallbackQuery().getMessage().getChatId().toString())
-                                .messageId(update.getCallbackQuery().getMessage().getMessageId())
-                                .replyMarkup(setKeyBoardChoseDate(getDisplayDate(refCalendar),getDisplayTime(refCalendar)))
-                                .build();
+                        return  editMessage(update,refCalendar);
 
+                    case "hourLeft":
+                        refCalendar.add(Calendar.HOUR_OF_DAY,-1);
+                        if(refCalendar.getTime().before(userDataCache.getStartedDate().get(userId))){
+                            refCalendar.add(Calendar.HOUR_OF_DAY,1);
+                            return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
+                                    .text("Вы не можете выбрать время раньше текущего")
+                                    .showAlert(true).build();
+                        }
+                        userDataCache.getSavedDate().put(userId,refCalendar);
+                        return  editMessage(update,refCalendar);
 
+                    case "hourRight":
+                        refCalendar.add(Calendar.HOUR_OF_DAY,+1);
+                        userDataCache.getSavedDate().put(userId,refCalendar);
+                        return  editMessage(update,refCalendar);
 
+                    case "minutesLeft":
+                        refCalendar.add(Calendar.MINUTE,-1);
+                        if(refCalendar.getTime().before(new Date())){
+                            refCalendar.add(Calendar.MINUTE,1);
+                            return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
+                                    .text("Вы не можете выбрать время раньше текущего")
+                                    .showAlert(true).build();
+                        }
+                        userDataCache.getSavedDate().put(userId,refCalendar);
+                        return  editMessage(update,refCalendar);
 
-                    case "chosenTime":
-                        System.out.println("Время"+data+ rawData.split(":")[1]);
-                        return null;
-                    case "timeLeft":
-                        System.out.println("Время налево");
-                        return null;
-                    case "timeRight":
-                        System.out.println("Время направо");
-                        return null;
+                    case "minutesLeft10":
+                        refCalendar.add(Calendar.MINUTE,-10);
+                        if(refCalendar.getTime().before(new Date())){
+                            refCalendar.add(Calendar.MINUTE,10);
+                            return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
+                                    .text("Вы не можете выбрать время раньше текущего")
+                                    .showAlert(true).build();
+                        }
+                        userDataCache.getSavedDate().put(userId,refCalendar);
+                        return  editMessage(update,refCalendar);
 
+                    case "minutesRight":
+                        refCalendar.add(Calendar.MINUTE,+1);
+                        userDataCache.getSavedDate().put(userId,refCalendar);
+                        return  editMessage(update,refCalendar);
+
+                    case "minutesRight10":
+                        refCalendar.add(Calendar.MINUTE,+10);
+                        userDataCache.getSavedDate().put(userId,refCalendar);
+                        return  editMessage(update,refCalendar);
                 }
         }
         return null;
     }
 
-
-
-
+    ////////Клавиатуры//////////
     private InlineKeyboardMarkup setKeyBoardChoseDate(String showDate, String showTime){
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-        //////Даты
+        //Даты
         var  today  = new InlineKeyboardButton();
         today.setText(showDate);
         today.setCallbackData("chosenDay:"+today.getText());
@@ -166,42 +189,49 @@ public class ChooseDateHandler implements UpdateHandler{
         var dayRightArrow7 = new InlineKeyboardButton();
         dayRightArrow7.setText(">>");
         dayRightArrow7.setCallbackData("dayRight7");
-        List<InlineKeyboardButton> rowDay = new ArrayList<>(List.of(dayLeftArrow7,dayLeftArrow, today, dayRightArrow,dayRightArrow7));
+        List<InlineKeyboardButton> rowDay = new ArrayList<>(List.of(today));
+        List<InlineKeyboardButton> arrows = new ArrayList<>(List.of(dayLeftArrow7,dayLeftArrow, dayRightArrow,dayRightArrow7));
         rows.add(rowDay);
-        ///////////////
+        rows.add(arrows);
+        //Часы
         var time = new InlineKeyboardButton();
         time.setText(showTime);
         time.setCallbackData("chosenTime:"+time.getText());
         var timeLeftArrow = new InlineKeyboardButton();
-        timeLeftArrow.setText("<<");
-        timeLeftArrow.setCallbackData("timeLeft");
+        timeLeftArrow.setText("<Ч");
+        timeLeftArrow.setCallbackData("hourLeft");
         var timeRightArrow = new InlineKeyboardButton();
-        timeRightArrow.setText(">>");
-        timeRightArrow.setCallbackData("timeRight");
+        timeRightArrow.setText("Ч>");
+        timeRightArrow.setCallbackData("hourRight");
         List<InlineKeyboardButton> rowTime = new ArrayList<>(List.of(timeLeftArrow,time,timeRightArrow));
+        //Минуты
+        var minutesLeftArrow = new InlineKeyboardButton();
+        minutesLeftArrow.setText("<M");
+        minutesLeftArrow.setCallbackData("minutesLeft");
+        var minutesLeftArrow10 = new InlineKeyboardButton();
+        minutesLeftArrow10.setText("<<M");
+        minutesLeftArrow10.setCallbackData("minutesLeft10");
+        var minutesRightArrow = new InlineKeyboardButton();
+        minutesRightArrow.setText("M>");
+        minutesRightArrow.setCallbackData("minutesRight");
+        var minutesRightArrow10 = new InlineKeyboardButton();
+        minutesRightArrow10.setText("M>>");
+        minutesRightArrow10.setCallbackData("minutesRight10");
+        List<InlineKeyboardButton> rowArrowsMinutes = new ArrayList<>(List.of(minutesLeftArrow10,minutesLeftArrow,minutesRightArrow,minutesRightArrow10));
         rows.add(rowTime);
+        rows.add(rowArrowsMinutes);
         ////////
         inlineKeyboardMarkup.setKeyboard(rows);
         return inlineKeyboardMarkup;
     }
 
-
-    private String getDisplayDate(Calendar calendar){
-        return calendar.get(Calendar.DAY_OF_MONTH) +" "+ calendar.getDisplayName(Calendar.MONTH, Calendar.LONG, locale);
-    }
-    private String getDisplayTime(Calendar calendar){
-        return calendar.get(Calendar.HOUR_OF_DAY)+ " "+ calendar.get(Calendar.MINUTE);
-    }
-
-
-
-    public SendMessage savePostAfterInputDate(String chatId, Date date, Long userId){
+    private SendMessage savePostAfterInputDate(String chatId, Date date, Long userId){
         userDataCache.getPostCreator(userId).getPost().setDate(date);
         log.info("Установлена дата поста {} для пользователя {}", date.toString(), userId);
         userDataCache.setUserBotState(userId, BotState.READY_TO_SAVE);
         SendMessage saveQuestion = new SendMessage();
         saveQuestion.setChatId(chatId);
-        saveQuestion.setText("Готов сохранить пост");
+        saveQuestion.setText("Пост будет отправлен: "+ sdf.format(date)+" сохранить?");
         saveQuestion.enableMarkdown(true);
         InlineKeyboardButton saveButton = new InlineKeyboardButton();
         saveButton.setText("Сохранить");
@@ -220,4 +250,21 @@ public class ChooseDateHandler implements UpdateHandler{
         saveQuestion.setReplyMarkup(inlineKeyboardMarkup);
         return saveQuestion;
     }
+
+    //Вспомогательные методы
+    private String getDisplayDate(Calendar calendar){
+        return calendar.get(Calendar.DAY_OF_MONTH) +"\n"+ calendar.getDisplayName(Calendar.MONTH, Calendar.LONG, locale);
+    }
+    private String getDisplayTime(Calendar calendar){
+        return String.format("%02d:%02d",calendar.get(Calendar.HOUR_OF_DAY),calendar.get(Calendar.MINUTE));
+    }
+
+    private EditMessageReplyMarkup editMessage(Update update, Calendar refCalendar){
+        return  EditMessageReplyMarkup.builder()
+                .chatId(update.getCallbackQuery().getMessage().getChatId().toString())
+                .messageId(update.getCallbackQuery().getMessage().getMessageId())
+                .replyMarkup(setKeyBoardChoseDate(getDisplayDate(refCalendar),getDisplayTime(refCalendar)))
+                .build();
+    }
+
 }
