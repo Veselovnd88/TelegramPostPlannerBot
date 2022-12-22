@@ -26,7 +26,7 @@ public class UpdateController {
     private final ChooseDateHandler chooseDateHandler;
     private final CallBackQueriesHandler callBackQueriesHandler;
     private final CommandMenuHandler commandMenuHandler;
-    private final ManageHandler manageHandler;
+    private final ManagePostTextHandler managePostTextHandler;
     private final DataCache userDataCache;
 
     private final UserService userService;
@@ -35,13 +35,13 @@ public class UpdateController {
     @Autowired
     public UpdateController(CreatePostHandler createPostHandler, MyPreciousBot myPreciousBot,
                             ChooseDateHandler chooseDateHandler, CallBackQueriesHandler callBackQueriesHandler, CommandMenuHandler commandMenuHandler,
-                            ManageHandler manageHandler, DataCache userDataCache, UserService userService) {
+                            ManagePostTextHandler managePostTextHandler, DataCache userDataCache, UserService userService) {
         this.createPostHandler = createPostHandler;
         this.chooseDateHandler = chooseDateHandler;
         this.callBackQueriesHandler = callBackQueriesHandler;
         this.commandMenuHandler = commandMenuHandler;
         this.bot = myPreciousBot;
-        this.manageHandler = manageHandler;
+        this.managePostTextHandler = managePostTextHandler;
         this.userDataCache = userDataCache;
         this.userService = userService;
     }
@@ -124,7 +124,7 @@ public class UpdateController {
                 bot.sendMessageBot(commandMenuHandler.processUpdate(update));
             }
             if(userDataCache.getUsersBotState(update.getMessage().getFrom().getId())==BotState.MANAGE){
-                bot.sendMessageBot(manageHandler.processUpdate(update));
+                bot.sendMessageBot(managePostTextHandler.processUpdate(update));
             }
         }
         //Обработка коллбэков

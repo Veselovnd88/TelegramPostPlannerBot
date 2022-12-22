@@ -6,7 +6,6 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.service.PostService;
@@ -17,11 +16,11 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class ManageHandler implements UpdateHandler{
+public class ManagePostTextHandler implements UpdateHandler{
     private final PostService postService;
     private final DataCache userDataCache;
 
-    public ManageHandler(PostService postService, DataCache userDataCache) {
+    public ManagePostTextHandler(PostService postService, DataCache userDataCache) {
         this.postService = postService;
         this.userDataCache = userDataCache;
     }
@@ -73,13 +72,5 @@ public class ManageHandler implements UpdateHandler{
         message.setChatId(userId);
         message.setText("Пост "+userDataCache.getPostForManage(userId));
         return message;
-    }
-    private SendMessage removeKeyBoard(SendMessage sendMessage){
-        ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
-        replyKeyboardRemove.setRemoveKeyboard(true);
-        replyKeyboardRemove.setSelective(true);
-        sendMessage.enableMarkdown(true);
-        sendMessage.setReplyMarkup(replyKeyboardRemove);
-        return sendMessage;
     }
 }
