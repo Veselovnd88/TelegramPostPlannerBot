@@ -10,7 +10,6 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.veselov.plannerBot.cache.DataCache;
@@ -21,19 +20,22 @@ import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.service.postsender.PostSender;
 import ru.veselov.plannerBot.utils.MessageUtils;
+import ru.veselov.plannerBot.utils.Utils;
 
 import java.util.*;
 
 @Component
 @Slf4j
 public class CallBackQueriesHandler implements UpdateHandler{
+    private final Utils utils;
     private final DataCache userDataCache;
     private final UserService userService;
     private final PostService postService;
     private final PostSender postSender;
     private final ChooseDateHandler chooseDateHandler;
     @Autowired
-    public CallBackQueriesHandler(DataCache userDataCache, UserService userService, PostService postService, PostSender postSender, ChooseDateHandler chooseDateHandler) {
+    public CallBackQueriesHandler(Utils utils, DataCache userDataCache, UserService userService, PostService postService, PostSender postSender, ChooseDateHandler chooseDateHandler) {
+        this.utils = utils;
         this.userDataCache = userDataCache;
         this.userService = userService;
         this.postService = postService;
@@ -101,7 +103,7 @@ public class CallBackQueriesHandler implements UpdateHandler{
                     postService.deleteById(userDataCache.getPostForManage(userId));
                     SendMessage message = new SendMessage(userId.toString(),MessageUtils.DELETED);
                     userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                    return removeKeyBoard(message);
+                    return utils.removeKeyBoard(message);
                 }
                 //просмотр поста
                 if(data.equals("view")){
@@ -113,7 +115,7 @@ public class CallBackQueriesHandler implements UpdateHandler{
                         postSender.send(post.get());
                         SendMessage message = new SendMessage(userId.toString(),MessageUtils.SHOW);
                         userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                        return removeKeyBoard(message);
+                        return utils.removeKeyBoard(message);
                     }
                     else{
                         userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
@@ -129,12 +131,12 @@ public class CallBackQueriesHandler implements UpdateHandler{
                         postService.planPost(postToSend);
                         SendMessage message = new SendMessage(userId.toString(), MessageUtils.POST_SENT);
                         userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                        return removeKeyBoard(message);
+                        return utils.removeKeyBoard(message);
                         }
                     }
                 else{
                     userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                    return removeKeyBoard(new SendMessage(userId.toString(),"Пост не найден"));
+                    return utils.removeKeyBoard(new SendMessage(userId.toString(),"Пост не найден"));
                 }
 
 
@@ -175,13 +177,6 @@ public class CallBackQueriesHandler implements UpdateHandler{
         return replyKeyboardMarkup;
         }
 
-        private SendMessage removeKeyBoard(SendMessage sendMessage){
-            ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
-            replyKeyboardRemove.setRemoveKeyboard(true);
-            replyKeyboardRemove.setSelective(true);
-            sendMessage.enableMarkdown(true);
-            sendMessage.setReplyMarkup(replyKeyboardRemove);
-            return sendMessage;
-        }
+
 }
 

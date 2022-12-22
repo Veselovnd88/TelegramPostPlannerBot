@@ -16,6 +16,7 @@ import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.utils.MessageUtils;
+import ru.veselov.plannerBot.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,11 +28,12 @@ import static ru.veselov.plannerBot.utils.MessageUtils.*;
 @Component
 @Slf4j
 public class CommandMenuHandler implements UpdateHandler {
-
+    private final Utils utils;
     private final DataCache userDataCache;
     private final PostService postService;
     @Autowired
-    public CommandMenuHandler(DataCache userDataCache, PostService postService, UserService userService) {
+    public CommandMenuHandler(Utils utils, DataCache userDataCache, PostService postService, UserService userService) {
+        this.utils = utils;
         this.userDataCache = userDataCache;
         this.postService = postService;
         this.userService = userService;
@@ -53,7 +55,7 @@ public class CommandMenuHandler implements UpdateHandler {
                 if(userDataCache.getUsersBotState(userId)!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
                     reset(update);
                 }
-                return greetings(update);
+                return utils.removeKeyBoard(greetings(update));
 /*При нажатии на создание поста проверяется количество запланированных постов и статус пользователя,
 *Если не превышает - проверяем, присоединен ли бот к каналам, и если да, то переводим состояние в
 * Ожидание поста */
@@ -71,8 +73,8 @@ public class CommandMenuHandler implements UpdateHandler {
                 userDataCache.createPostCreator(update.getMessage().getFrom());
                 userDataCache.setUserBotState(userId,BotState.AWAITING_POST);
                 log.info("Бот в состоянии AWAITING_POST для пользователя {}",userId);
-                return new SendMessage(update.getMessage().getChatId().toString(),
-                        AWAIT_CONTENT_MESSAGE);
+                return utils.removeKeyBoard(new SendMessage(update.getMessage().getChatId().toString(),
+                        AWAIT_CONTENT_MESSAGE));
             case "/view":
                 log.info("Нажата команда /view");
                 if(userDataCache.getUsersBotState(userId)!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
@@ -83,14 +85,15 @@ public class CommandMenuHandler implements UpdateHandler {
 
             case "/reset":
                 log.info("Нажата кнопка /reset");
-                return reset(update);
+                return utils.removeKeyBoard(reset(update));
 
             case "/help":
+                reset(update);
                 log.info("Нажата кнопка /help");
-                return new SendMessage(String.valueOf(update.getMessage().getChatId()),
-                        HELP_MESSAGE);
+                return utils.removeKeyBoard(new SendMessage(String.valueOf(update.getMessage().getChatId()),
+                        HELP_MESSAGE));
         }
-        return new SendMessage(String.valueOf(update.getMessage().getChatId()), MessageUtils.UNKNOWN_COMMAND);
+        return utils.removeKeyBoard(new SendMessage(String.valueOf(update.getMessage().getChatId()), MessageUtils.UNKNOWN_COMMAND));
     }
 
     private SendMessage greetings(Update update){

@@ -15,8 +15,8 @@ import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.DataCache;
-import ru.veselov.plannerBot.controller.handlers.AddDataHandler;
 import ru.veselov.plannerBot.controller.handlers.CallBackQueriesHandler;
+import ru.veselov.plannerBot.controller.handlers.ChooseDateHandler;
 import ru.veselov.plannerBot.controller.handlers.CreatePostHandler;
 import ru.veselov.plannerBot.repository.ChatRepository;
 import ru.veselov.plannerBot.service.SchedulingService;
@@ -44,7 +44,7 @@ class UpdateControllerFunctionTest {
     @MockBean
     private  CreatePostHandler createPostHandler;
     @MockBean
-    private AddDataHandler addDataHandler;
+    private ChooseDateHandler chooseDateHandler;
     @MockBean
     private CallBackQueriesHandler callBackQueriesHandler;
     @MockBean
