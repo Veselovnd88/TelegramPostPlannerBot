@@ -110,6 +110,7 @@ public class CallBackQueriesHandler implements UpdateHandler{
                     Optional<Post> post = postService.findById(userDataCache.getPostForManage(userId));
                     if(post.isPresent()){
                         Chat selfChat = new Chat();
+                        selfChat.setTitle("Пользователь "+userId);
                         selfChat.setId(userId);
                         post.get().setChats(Set.of(selfChat));
                         postSender.send(post.get());

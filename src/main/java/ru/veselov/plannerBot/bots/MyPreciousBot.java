@@ -98,7 +98,7 @@ public class MyPreciousBot extends TelegramLongPollingBot {
                     execute(sendMessage);
                 }
             }catch (TelegramApiException e){
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         }
 }
