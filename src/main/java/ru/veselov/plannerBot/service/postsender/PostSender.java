@@ -11,18 +11,25 @@ import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.model.Post;
+import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.utils.MessageUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Timer;
 import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 public class PostSender {
     private final MyPreciousBot bot;
+
+    private final Map<Integer, Timer> timers=new HashMap<>();
     @Autowired
     public PostSender(MyPreciousBot bot) {
         this.bot = bot;
     }
+
 
 
     public void send(Post post){
@@ -140,4 +147,26 @@ public class PostSender {
         }
 
     }
+
+    /*Создается объект таймера и помещается в кеш, на тот случай, если пользоватеть отправил пост в канал
+    * нажатием кнопки "Отправить сейчас", чтобы не было повторного вызова таймера*/
+    public void createTimer(Post post, PostService postService){
+        PostSenderTask postSenderTask = new PostSenderTask(bot, post, postService, this);
+        if(timers.containsKey(post.getPostId())){
+            Timer savedTimer = timers.get(post.getPostId());
+            log.info("Таймер поста {} отменен", post.getPostId());
+            savedTimer.purge();
+            savedTimer.cancel();
+        }
+        Timer timer = new Timer();
+        timer.schedule(postSenderTask, post.getDate());
+        log.info("Пост № {} запланирован к отправке на {}", post.getPostId(), post.getDate());
+        timers.put(post.getPostId(),timer);
+    }
+
+
+    public void removeTimer(Integer postId){
+        timers.remove(postId);
+    }
+
 }

@@ -110,11 +110,9 @@ public class CallBackQueriesHandler implements UpdateHandler{
                     return sendMessage;
                 }
         }
+        return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
+                .text(MessageUtils.DONT_AWAIT_CONTENT).build();
 
-        AnswerCallbackQuery botIsBusyMessage = new AnswerCallbackQuery();
-        botIsBusyMessage.setCallbackQueryId(update.getCallbackQuery().getId());
-        botIsBusyMessage.setText(MessageUtils.DONT_AWAIT_CONTENT);
-        return botIsBusyMessage;
         }
 
         //////////////////////////////

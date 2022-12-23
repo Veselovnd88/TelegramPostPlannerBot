@@ -26,12 +26,15 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional(readOnly = true)
 public class PostService {
+
     private final MyPreciousBot bot;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final ChatRepository chatRepository;
     private final UserService userService;
     private final PostSender postSender;
+
+    private final Map <Integer, Timer> timers = new HashMap<>();
 
     @Autowired
     public PostService(MyPreciousBot bot, PostRepository postRepository, UserRepository userRepository, ChatRepository chatRepository, UserService userService, PostSender postSender) {
@@ -68,7 +71,14 @@ public class PostService {
                 }
                 else if(postState==PostState.PLANNED){
                     Optional<PostEntity> optionalPostEntity =postRepository.findById(postDto.getPostId());
-                    postEntity=optionalPostEntity.orElseGet(()->convertToEntity(postDto));
+                    if (optionalPostEntity.isPresent()){
+                        postEntity = optionalPostEntity.get();
+                        postEntity.setDate(postDto.getDate());
+                    }
+                    else{
+                        postEntity=convertToEntity(postDto);
+                    }
+
                 }
                 else{
                     postEntity=convertToEntity(postDto);
@@ -78,13 +88,11 @@ public class PostService {
                 postEntity=convertToEntity(postDto);
                 postEntity.setPostState(PostState.SAVED);
             }
-                 //Устанавливаем юзера к посту, и добавляем пост к юзеру
+            //Устанавливаем юзера к посту, и добавляем пост к юзеру
             userOptional.get().addPost(postEntity);
             PostEntity savedPost = postRepository.save(postEntity);
             if(savedPost.getPostState()==PostState.PLANNED){
-                PostSenderTask postSenderTask = new PostSenderTask(bot, convertToPost(savedPost), this, postSender);
-                log.info("Пост № {} запланирован к отправке на {}", savedPost.getPostId(), savedPost.getDate());
-                new Timer().schedule(postSenderTask, postDto.getDate());
+                postSender.createTimer(convertToPost(savedPost),this);
             }
         }
     }

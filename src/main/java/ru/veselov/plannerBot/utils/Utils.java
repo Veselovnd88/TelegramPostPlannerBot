@@ -1,6 +1,7 @@
 package ru.veselov.plannerBot.utils;
 
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 
@@ -15,4 +16,5 @@ public class Utils {
         sendMessage.setReplyMarkup(replyKeyboardRemove);
         return sendMessage;
     }
+
 }

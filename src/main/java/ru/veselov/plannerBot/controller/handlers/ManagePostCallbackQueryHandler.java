@@ -82,9 +82,7 @@ public class ManagePostCallbackQueryHandler implements UpdateHandler{
             userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
             return utils.removeKeyBoard(new SendMessage(userId.toString(),"Пост не найден"));
         }
-        AnswerCallbackQuery botIsBusyMessage = new AnswerCallbackQuery();//FIXME вынести в Utils
-        botIsBusyMessage.setCallbackQueryId(update.getCallbackQuery().getId());
-        botIsBusyMessage.setText(MessageUtils.DONT_AWAIT_CONTENT);
-        return botIsBusyMessage;
+        return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
+                .text(MessageUtils.DONT_AWAIT_CONTENT).build();
     }
 }

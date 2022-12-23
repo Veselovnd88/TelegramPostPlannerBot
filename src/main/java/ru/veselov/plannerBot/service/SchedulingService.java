@@ -2,10 +2,8 @@ package ru.veselov.plannerBot.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.cache.UserDataCache;
 import ru.veselov.plannerBot.controller.BotState;
@@ -18,15 +16,13 @@ import java.util.*;
 @Slf4j
 @Service
 public class SchedulingService {
-    private final MyPreciousBot bot;
     private final PostService postService;
     private final DataCache userDataCache;
     private final TimeZone tz = TimeZone.getTimeZone("Europe/Moscow");
 
 
     @Autowired
-    public SchedulingService(MyPreciousBot bot, PostService postService, UserDataCache userDataCache) {
-        this.bot = bot;
+    public SchedulingService(PostService postService, UserDataCache userDataCache) {
         this.postService = postService;
         this.userDataCache = userDataCache;
     }
@@ -42,7 +38,7 @@ public class SchedulingService {
         }
     }
 
-    @Scheduled(cron = "${bot.period}",zone = "Europe/Moscow")//секунда 0, минута 0 каждые 6 часов
+    @Scheduled(cron = "${bot.period}",zone = "Europe/Moscow")
     public void scheduledTask(){
         checkPostCreators();
         Calendar calendar = Calendar.getInstance();
@@ -54,6 +50,8 @@ public class SchedulingService {
                 postService.planPost(post);
             }
         }
+
+
     /*Проверка на висящие объекты - если юзер начал создавать пост и не закончил, то обнуляем
     * пост и ставим статус бота в готов к работе*/
     public void checkPostCreators(){

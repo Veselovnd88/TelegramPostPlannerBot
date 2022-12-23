@@ -8,6 +8,7 @@ import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.service.PostService;
 
+import java.util.Optional;
 import java.util.TimerTask;
 
 @Slf4j
@@ -19,6 +20,7 @@ public class PostSenderTask extends TimerTask {
     private final PostService postService;
     private final PostSender postSender;
     public PostSenderTask(MyPreciousBot bot, Post post, PostService postService, PostSender postSender){
+        //передать только ID поста
         this.bot = bot;
         this.post = post;
         this.postService = postService;
@@ -27,8 +29,9 @@ public class PostSenderTask extends TimerTask {
 
     @Override
     public void run() {
-        postSender.send(post);
-        post.setPostState(PostState.SENT);
-        postService.savePost(post);
+         postSender.send(post);
+         post.setPostState(PostState.SENT);
+         postService.savePost(post);
+         postSender.removeTimer(post.getPostId());
     }
 }
