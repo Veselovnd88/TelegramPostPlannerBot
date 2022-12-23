@@ -47,7 +47,7 @@ public class MyPreciousBot extends TelegramLongPollingBot {
         BotCommand resetCommand = new BotCommand("/reset", "Сбросить");
         BotCommand helpCommand = new BotCommand("/help","Информация о боте");
         List<BotCommand> commandList = new ArrayList<>(List.of(startCommand, createPostCommand, seeAllPostsCommand, resetCommand, helpCommand));
-        //Установка меню только для админа TODO сделать обработку для команды /promote
+        //Установка меню только для админа
         BotCommandScopeChat botCommandScopeChat = new BotCommandScopeChat();
         botCommandScopeChat.setChatId(Long.valueOf(botProperties.getAdminId()));
         List<BotCommand> commandsAdmin = new ArrayList<>(commandList);

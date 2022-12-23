@@ -51,18 +51,8 @@ public class UserService {
         Optional<UserEntity> entityOptional = userRepository.findByUserId(user.getId().toString());
         Optional<ChatEntity> chatOptional = chatRepository.findByChatId(chat.getId().toString());
         /*Может существовать только одна сущность, поэтому - если в бд чата и юзера еще нет - то создаем новые*/
-        if(chatOptional.isEmpty()){
-            chatEntity = chatToEntity(chat);
-        }
-        else{
-            chatEntity=chatOptional.get();
-        }
-        if(entityOptional.isEmpty()){
-            userEntity = userToEntity(user);
-        }
-        else{
-            userEntity = entityOptional.get();
-        }
+        chatEntity = chatOptional.orElseGet(() -> chatToEntity(chat));
+        userEntity = entityOptional.orElseGet(() -> userToEntity(user));
         userEntity.addChat(chatEntity);
         chatEntity.addUser(userEntity);
         userRepository.save(userEntity);
@@ -77,7 +67,6 @@ public class UserService {
         if(byUserId.isPresent()){
             UserEntity userEntity = byUserId.get();
             userEntity.setStatus(dto.getStatus());
-            System.out.println(userEntity.getStatus());
             userEntity.setUserName(dto.getUserName());
             userEntity.setLastName(dto.getLastName());
             userEntity.setFirstName(dto.getFirstName());

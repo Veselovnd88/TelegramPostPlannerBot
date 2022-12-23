@@ -31,7 +31,7 @@ public class PostSender {
     }
 
 
-
+    /*TODO предусмотреть помещение постов в очередь если телеграм отдал ошибку 429 (много постов в 1 секунду)*/
     public void send(Post post){
 
         for(Chat chat: post.getChats()) {

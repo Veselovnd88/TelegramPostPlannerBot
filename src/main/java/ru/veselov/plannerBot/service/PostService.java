@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
-import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostEntity;
 import ru.veselov.plannerBot.model.PostState;
@@ -17,7 +16,6 @@ import ru.veselov.plannerBot.repository.ChatRepository;
 import ru.veselov.plannerBot.repository.PostRepository;
 import ru.veselov.plannerBot.repository.UserRepository;
 import ru.veselov.plannerBot.service.postsender.PostSender;
-import ru.veselov.plannerBot.service.postsender.PostSenderTask;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,18 +25,14 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class PostService {
 
-    private final MyPreciousBot bot;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final ChatRepository chatRepository;
     private final UserService userService;
     private final PostSender postSender;
 
-    private final Map <Integer, Timer> timers = new HashMap<>();
-
     @Autowired
-    public PostService(MyPreciousBot bot, PostRepository postRepository, UserRepository userRepository, ChatRepository chatRepository, UserService userService, PostSender postSender) {
-        this.bot = bot;
+    public PostService(PostRepository postRepository, UserRepository userRepository, ChatRepository chatRepository, UserService userService, PostSender postSender) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.chatRepository = chatRepository;
@@ -47,7 +41,7 @@ public class PostService {
     }
     /*Планировщик постов, сюда попадает ДТО в случаях:
     * 1) Сразу после создания - со статусом CREATE, проверяется время публикации внутри метода
-    * 2) Из планировщика Спринг - при выборке из БД с условием SAVED и не позднее +1 день после старта*/
+    * 2) Из ScheduledService - при выборке из БД с условием SAVED и не позднее +1 день после старта*/
     @Transactional
     public void planPost(Post postDto){
         Calendar cl=Calendar.getInstance(TimeZone.getTimeZone("Europe/Moscow"));

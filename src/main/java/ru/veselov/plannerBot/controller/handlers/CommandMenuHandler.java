@@ -118,7 +118,6 @@ public class CommandMenuHandler implements UpdateHandler {
                     START_MESSAGE);
         }
         userDataCache.setUserBotState(update.getMessage().getFrom().getId(),BotState.READY_TO_WORK);
-        log.info("Бот в состоянии READY_TO_WORK для пользователя {}",update.getMessage().getFrom().getId());
         return new SendMessage(update.getMessage().getChatId().toString(),
                 START_MESSAGE_USER_ALREADY_USE_BOT+chatNames);
 

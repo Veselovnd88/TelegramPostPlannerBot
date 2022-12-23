@@ -106,10 +106,9 @@ public class CallBackQueriesHandler implements UpdateHandler{
                 if(data.equals("manage")){
                     userDataCache.setUserBotState(userId,BotState.MANAGE);
                     ReplyKeyboardMarkup replyKeyboardMarkup = setKeyboardChosePostId(update.getCallbackQuery().getFrom());
-                    SendMessage sendMessage = new SendMessage(userId.toString(),
-                            "Введите или выберите из списка ID поста для управления");
-                    sendMessage.setReplyMarkup(replyKeyboardMarkup);
-                    return sendMessage;
+                    return SendMessage.builder().chatId(userId.toString())
+                            .text("Введите или выберите из списка ID поста для управления")
+                            .replyMarkup(replyKeyboardMarkup).build();
                 }
 
             case PROMOTE_USER:
