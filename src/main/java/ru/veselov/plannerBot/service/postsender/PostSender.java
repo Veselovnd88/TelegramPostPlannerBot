@@ -164,7 +164,6 @@ public class PostSender {
         timers.put(post.getPostId(),timer);
     }
 
-
     public void removeTimer(Integer postId){
         timers.remove(postId);
     }

@@ -1,6 +1,7 @@
 package ru.veselov.plannerBot.controller.handlers;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -19,7 +20,7 @@ import java.util.List;
 public class ManagePostTextHandler implements UpdateHandler{
     private final PostService postService;
     private final DataCache userDataCache;
-
+    @Autowired
     public ManagePostTextHandler(PostService postService, DataCache userDataCache) {
         this.postService = postService;
         this.userDataCache = userDataCache;

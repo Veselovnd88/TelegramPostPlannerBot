@@ -7,5 +7,6 @@ public enum BotState {
     BOT_WAITING_FOR_ADDING_TO_CHANNEL,
     MANAGE,
     VIEW,
+    PROMOTE_USER,
     READY_TO_SAVE
 }

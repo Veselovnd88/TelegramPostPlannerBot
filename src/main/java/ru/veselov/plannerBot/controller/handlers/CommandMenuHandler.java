@@ -92,6 +92,19 @@ public class CommandMenuHandler implements UpdateHandler {
                 log.info("Нажата кнопка /help");
                 return utils.removeKeyBoard(new SendMessage(String.valueOf(update.getMessage().getChatId()),
                         HELP_MESSAGE));
+
+            case "/promote":
+                 userDataCache.setUserBotState(userId,BotState.PROMOTE_USER);
+                 log.info("Нажата кнопка /promote");
+                 return utils.removeKeyBoard(
+                         SendMessage.builder().chatId(String.valueOf(update.getMessage().getChatId()))
+                                 .text("Перешлите сообщение пользователя, у которого будем менять статус").build()
+                 );
+                //ввести имя/фамилию или ID пользователя
+                //получить список по имеющимся данным
+                //далее выдать клавиатуру (inline) для конкретного пользователя
+                //при нажатии вывести его имя и дать inline клавиатуру для выбора статуса
+                //сохранить и дать сообщение об успешном сохранении
         }
         return utils.removeKeyBoard(new SendMessage(String.valueOf(update.getMessage().getChatId()), MessageUtils.UNKNOWN_COMMAND));
     }

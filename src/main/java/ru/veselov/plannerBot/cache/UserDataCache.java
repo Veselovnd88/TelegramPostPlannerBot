@@ -37,6 +37,16 @@ public class UserDataCache implements DataCache {
     private final Map<Long, Calendar> savedDate = new HashMap<>();
     private final Map<Long, Date> startedDate = new HashMap<>();
 
+    public User getPromoteUser() {
+        return promoteUser;
+    }
+
+    public void setPromoteUser(User promoteUser) {
+        this.promoteUser = promoteUser;
+    }
+
+    private User promoteUser;
+
     @Autowired
     public UserDataCache(PostService postService) {
         this.postService = postService;

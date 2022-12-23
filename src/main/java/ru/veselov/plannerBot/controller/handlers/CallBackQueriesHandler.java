@@ -31,14 +31,16 @@ public class CallBackQueriesHandler implements UpdateHandler{
     private final DataCache userDataCache;
     private final UserService userService;
     private final PostService postService;
+    private final PromoteUserCallbackHandler promoteUserCallback;
 
     private final ManagePostCallbackQueryHandler managePostCallbackQueryHandler;
     private final ChooseDateHandler chooseDateHandler;
     @Autowired
-    public CallBackQueriesHandler(DataCache userDataCache, UserService userService, PostService postService, ManagePostCallbackQueryHandler managePostCallbackQueryHandler, ChooseDateHandler chooseDateHandler) {
+    public CallBackQueriesHandler(DataCache userDataCache, UserService userService, PostService postService, PromoteUserCallbackHandler promoteUserCallback, ManagePostCallbackQueryHandler managePostCallbackQueryHandler, ChooseDateHandler chooseDateHandler) {
         this.userDataCache = userDataCache;
         this.userService = userService;
         this.postService = postService;
+        this.promoteUserCallback = promoteUserCallback;
         this.managePostCallbackQueryHandler = managePostCallbackQueryHandler;
         this.chooseDateHandler = chooseDateHandler;
     }
@@ -109,6 +111,9 @@ public class CallBackQueriesHandler implements UpdateHandler{
                     sendMessage.setReplyMarkup(replyKeyboardMarkup);
                     return sendMessage;
                 }
+
+            case PROMOTE_USER:
+                return promoteUserCallback.processUpdate(update);
         }
         return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
                 .text(MessageUtils.DONT_AWAIT_CONTENT).build();

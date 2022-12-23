@@ -27,6 +27,7 @@ public class UpdateController {
     private final CallBackQueriesHandler callBackQueriesHandler;
     private final CommandMenuHandler commandMenuHandler;
     private final ManagePostTextHandler managePostTextHandler;
+    private final PromoteUserTextHandler promoteUserTextHandler;
     private final DataCache userDataCache;
 
     private final UserService userService;
@@ -35,13 +36,14 @@ public class UpdateController {
     @Autowired
     public UpdateController(CreatePostHandler createPostHandler, MyPreciousBot myPreciousBot,
                             ChooseDateHandler chooseDateHandler, CallBackQueriesHandler callBackQueriesHandler, CommandMenuHandler commandMenuHandler,
-                            ManagePostTextHandler managePostTextHandler, DataCache userDataCache, UserService userService) {
+                            ManagePostTextHandler managePostTextHandler, PromoteUserTextHandler promoteUserTextHandler, DataCache userDataCache, UserService userService) {
         this.createPostHandler = createPostHandler;
         this.chooseDateHandler = chooseDateHandler;
         this.callBackQueriesHandler = callBackQueriesHandler;
         this.commandMenuHandler = commandMenuHandler;
         this.bot = myPreciousBot;
         this.managePostTextHandler = managePostTextHandler;
+        this.promoteUserTextHandler = promoteUserTextHandler;
         this.userDataCache = userDataCache;
         this.userService = userService;
     }
@@ -125,6 +127,9 @@ public class UpdateController {
             }
             if(userDataCache.getUsersBotState(update.getMessage().getFrom().getId())==BotState.MANAGE){
                 bot.sendMessageBot(managePostTextHandler.processUpdate(update));
+            }
+            if(userDataCache.getUsersBotState(update.getMessage().getFrom().getId())==BotState.PROMOTE_USER){
+                bot.sendMessageBot(promoteUserTextHandler.processUpdate(update));
             }
         }
         //Обработка коллбэков

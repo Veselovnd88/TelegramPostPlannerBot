@@ -24,5 +24,8 @@ public interface DataCache {
     public Map<Long, Calendar> getSavedDate();
     public Map<Long, Date> getStartedDate();
 
+    public User getPromoteUser();
+    public void setPromoteUser(User user);
+
 
 }
