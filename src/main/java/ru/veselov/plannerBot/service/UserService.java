@@ -70,6 +70,22 @@ public class UserService {
         log.info("Канал {}: {} для пользователя {} сохранен в БД", chatEntity.getChatId(),
                 chatEntity.getTitle(),user.getId());
     }
+    /*Обновление данных пользователя*/
+    @Transactional
+    public void saveUser(UserEntity dto){
+        Optional<UserEntity> byUserId = userRepository.findByUserId(dto.getUserId());
+        if(byUserId.isPresent()){
+            UserEntity userEntity = byUserId.get();
+            userEntity.setStatus(dto.getStatus());
+            System.out.println(userEntity.getStatus());
+            userEntity.setUserName(dto.getUserName());
+            userEntity.setLastName(dto.getLastName());
+            userEntity.setFirstName(dto.getFirstName());
+            userRepository.save(userEntity);
+        }
+    }
+
+
     public Set<Chat> findAllChatsByUser(User user){
         return chatRepository.findAllByUsers(userToEntity(user)).stream().map(this::entityToChat).collect(Collectors.toSet());
     }

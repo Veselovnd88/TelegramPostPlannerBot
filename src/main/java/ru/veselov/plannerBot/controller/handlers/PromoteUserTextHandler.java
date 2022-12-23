@@ -42,7 +42,7 @@ public class PromoteUserTextHandler  implements  UpdateHandler{
         premiumButton.setText("Премиум");
         InlineKeyboardButton unlimButton = new InlineKeyboardButton();
         unlimButton.setCallbackData("unlimited");
-        unlimButton.setText("Безлимитный>");
+        unlimButton.setText("Безлимитный");
         row1.add(standardButton);
         row2.add(premiumButton);
         row3.add(unlimButton);
@@ -54,6 +54,5 @@ public class PromoteUserTextHandler  implements  UpdateHandler{
         inlineKeyboardMarkup.setKeyboard(rowList);
         return SendMessage.builder().chatId(userId).replyMarkup(inlineKeyboardMarkup)
                 .text("Выберите статус").build();
-
     }
 }

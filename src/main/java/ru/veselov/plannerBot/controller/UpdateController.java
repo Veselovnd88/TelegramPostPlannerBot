@@ -125,10 +125,10 @@ public class UpdateController {
             if(isCommand(update)){
                 bot.sendMessageBot(commandMenuHandler.processUpdate(update));
             }
-            if(userDataCache.getUsersBotState(update.getMessage().getFrom().getId())==BotState.MANAGE){
+            else if(userDataCache.getUsersBotState(update.getMessage().getFrom().getId())==BotState.MANAGE){
                 bot.sendMessageBot(managePostTextHandler.processUpdate(update));
             }
-            if(userDataCache.getUsersBotState(update.getMessage().getFrom().getId())==BotState.PROMOTE_USER){
+            else if(userDataCache.getUsersBotState(update.getMessage().getFrom().getId())==BotState.PROMOTE_USER){
                 bot.sendMessageBot(promoteUserTextHandler.processUpdate(update));
             }
         }

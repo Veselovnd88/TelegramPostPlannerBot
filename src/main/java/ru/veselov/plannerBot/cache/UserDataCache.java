@@ -54,6 +54,7 @@ public class UserDataCache implements DataCache {
 
     @Override
     public void setUserBotState(Long userId,BotState botState) {
+        log.info("Бот в состоянии {}", botState);
         botStates.put(userId,botState);
     }
 
