@@ -18,28 +18,28 @@ import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.service.UserService;
-import ru.veselov.plannerBot.service.postsender.PostSender;
 import ru.veselov.plannerBot.utils.MessageUtils;
-import ru.veselov.plannerBot.utils.Utils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Component
 @Slf4j
 public class CallBackQueriesHandler implements UpdateHandler{
-    private final Utils utils;
+
     private final DataCache userDataCache;
     private final UserService userService;
     private final PostService postService;
-    private final PostSender postSender;
+
+    private final ManagePostCallbackQueryHandler managePostCallbackQueryHandler;
     private final ChooseDateHandler chooseDateHandler;
     @Autowired
-    public CallBackQueriesHandler(Utils utils, DataCache userDataCache, UserService userService, PostService postService, PostSender postSender, ChooseDateHandler chooseDateHandler) {
-        this.utils = utils;
+    public CallBackQueriesHandler(DataCache userDataCache, UserService userService, PostService postService, ManagePostCallbackQueryHandler managePostCallbackQueryHandler, ChooseDateHandler chooseDateHandler) {
         this.userDataCache = userDataCache;
         this.userService = userService;
         this.postService = postService;
-        this.postSender = postSender;
+        this.managePostCallbackQueryHandler = managePostCallbackQueryHandler;
         this.chooseDateHandler = chooseDateHandler;
     }
 
@@ -98,48 +98,7 @@ public class CallBackQueriesHandler implements UpdateHandler{
                     return chooseDateHandler.processUpdate(update);
                 }
             case MANAGE:
-                //удаление поста
-                if(data.equals("delete")){
-                    postService.deleteById(userDataCache.getPostForManage(userId));
-                    SendMessage message = new SendMessage(userId.toString(),MessageUtils.DELETED);
-                    userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                    return utils.removeKeyBoard(message);
-                }
-                //просмотр поста
-                if(data.equals("view")){
-                    Optional<Post> post = postService.findById(userDataCache.getPostForManage(userId));
-                    if(post.isPresent()){
-                        Chat selfChat = new Chat();
-                        selfChat.setTitle("Пользователь "+userId);
-                        selfChat.setId(userId);
-                        post.get().setChats(Set.of(selfChat));
-                        postSender.send(post.get());
-                        SendMessage message = new SendMessage(userId.toString(),MessageUtils.SHOW);
-                        userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                        return utils.removeKeyBoard(message);
-                    }
-                    else{
-                        userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                        return new SendMessage(userId.toString(),"Пост не найден");
-                    }
-                }
-                //отправить прямо сейчас
-                if(data.equals("send")){
-                    Optional<Post> post = postService.findById(userDataCache.getPostForManage(userId));
-                    if(post.isPresent()){
-                        Post postToSend = post.get();
-                        postToSend.setDate(new Date());
-                        postService.planPost(postToSend);
-                        SendMessage message = new SendMessage(userId.toString(), MessageUtils.POST_SENT);
-                        userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                        return utils.removeKeyBoard(message);
-                        }
-                    }
-                else{
-                    userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                    return utils.removeKeyBoard(new SendMessage(userId.toString(),"Пост не найден"));
-                }
-
+                return managePostCallbackQueryHandler.processUpdate(update);
 
             case VIEW:
                 if(data.equals("manage")){
@@ -158,7 +117,7 @@ public class CallBackQueriesHandler implements UpdateHandler{
         return botIsBusyMessage;
         }
 
-
+        //////////////////////////////
         private ReplyKeyboardMarkup setKeyboardChosePostId(User user){
             List<Post> allPlanned = postService.findByUserAndPostStates(user,
                     List.of(PostState.SAVED,PostState.PLANNED));
@@ -177,7 +136,6 @@ public class CallBackQueriesHandler implements UpdateHandler{
         replyKeyboardMarkup.setOneTimeKeyboard(false);
         return replyKeyboardMarkup;
         }
-
 
 }
 

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -13,9 +14,8 @@ import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.controller.handlers.*;
 import ru.veselov.plannerBot.service.UserService;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -26,7 +26,7 @@ public class UpdateController {
     private final ChooseDateHandler chooseDateHandler;
     private final CallBackQueriesHandler callBackQueriesHandler;
     private final CommandMenuHandler commandMenuHandler;
-    private final ManageHandler manageHandler;
+    private final ManagePostTextHandler managePostTextHandler;
     private final DataCache userDataCache;
 
     private final UserService userService;
@@ -35,13 +35,13 @@ public class UpdateController {
     @Autowired
     public UpdateController(CreatePostHandler createPostHandler, MyPreciousBot myPreciousBot,
                             ChooseDateHandler chooseDateHandler, CallBackQueriesHandler callBackQueriesHandler, CommandMenuHandler commandMenuHandler,
-                            ManageHandler manageHandler, DataCache userDataCache, UserService userService) {
+                            ManagePostTextHandler managePostTextHandler, DataCache userDataCache, UserService userService) {
         this.createPostHandler = createPostHandler;
         this.chooseDateHandler = chooseDateHandler;
         this.callBackQueriesHandler = callBackQueriesHandler;
         this.commandMenuHandler = commandMenuHandler;
         this.bot = myPreciousBot;
-        this.manageHandler = manageHandler;
+        this.managePostTextHandler = managePostTextHandler;
         this.userDataCache = userDataCache;
         this.userService = userService;
     }
@@ -107,34 +107,41 @@ public class UpdateController {
                     || update.getMessage().hasAudio()
                     ||update.getMessage().hasVideo()
                     ||update.getMessage().hasDocument()
-                    ||update.getMessage().hasPoll())&&!isCommand(update.getMessage().getText())) {
+                    ||update.getMessage().hasPoll())&&!isCommand(update)) {
                         bot.sendMessageBot(createPostHandler.processUpdate(update));
                         }
                     }
                 if(userDataCache.getUsersBotState(userId)==BotState.AWAITING_DATE){
-                    if((!isCommand(update.getMessage().getText()))) {
+                    if(!isCommand(update)){
                         bot.sendMessageBot(chooseDateHandler.processUpdate(update));
                     }
                 }
         }
         //Апдейты с текстами
+
         if(update.hasMessage()&& update.getMessage().hasText()){
-            if(isCommand(update.getMessage().getText())){
+            if(isCommand(update)){
                 bot.sendMessageBot(commandMenuHandler.processUpdate(update));
             }
             if(userDataCache.getUsersBotState(update.getMessage().getFrom().getId())==BotState.MANAGE){
-                bot.sendMessageBot(manageHandler.processUpdate(update));
+                bot.sendMessageBot(managePostTextHandler.processUpdate(update));
             }
         }
-        //Обработка запросов с Коллбэками
+        //Обработка коллбэков
         if(update.hasCallbackQuery()){
            bot.sendMessageBot(callBackQueriesHandler.processUpdate(update));
         }
     }
 
-    private boolean isCommand(String string){
-        List<String> commands = new ArrayList<>(List.of("/start", "/view", "/reset", "/help", "/create"));
-        return commands.contains(string);
+    private boolean isCommand(Update update) {
+        if (update.hasMessage() && update.getMessage().hasEntities()) {
+            Optional<MessageEntity> commandEntity = update.getMessage().getEntities()
+                    .stream().filter(x -> "bot_command".equals(x.getType())).findFirst();
+            return commandEntity.isPresent();
+        }
+        return false;
     }
+                /*List<String> commands = new ArrayList<>(List.of("/start", "/view", "/reset", "/help", "/create"));
+        return commands.contains(string);*/
 
 }
