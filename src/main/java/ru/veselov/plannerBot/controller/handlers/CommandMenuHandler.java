@@ -47,7 +47,7 @@ public class CommandMenuHandler implements UpdateHandler {
         String receivedMessage = update.getMessage().getText();
 
         switch (receivedMessage){
-/*При нажатии на стар - проверяется текущий статус, если бот не ожидает добавления в канал,
+/*При нажатии на старт - проверяется текущий статус, если бот не ожидает добавления в канал,
 * то пост сбрасывается (в методе reset также проверяется наличие каналов и устанавливается
 *  статус бота - ready - если есть каналы, и bot waiting если нет каналов */
             case "/start":
@@ -55,21 +55,25 @@ public class CommandMenuHandler implements UpdateHandler {
                 if(userDataCache.getUsersBotState(userId)!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
                     reset(update);
                 }
+                else{
+                    userService.saveUser(userService.userToEntity(user));
+                    userDataCache.setUserBotState(userId,BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
+                }
                 return utils.removeKeyBoard(greetings(update));
 /*При нажатии на создание поста проверяется количество запланированных постов и статус пользователя,
 *Если не превышает - проверяем, присоединен ли бот к каналам, и если да, то переводим состояние в
 * Ожидание поста */
             case "/create":
                 log.info("Нажата команда /create");
+                if(userDataCache.getUsersBotState(userId)==BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
+                    return new SendMessage(update.getMessage().getChatId().toString(),
+                            BOT_WAS_NOT_ADDED_TO_CHANEL);}
                 List<Post> byUser = postService.findByUserAndPostStates(user,
                         List.of(PostState.SAVED,PostState.PLANNED));
                 int max = userService.getUserMaxPosts(user);
                 if(max!=-1 && byUser.size()>=max){
                     return new SendMessage(userId.toString(),POST_LIMIT+max);
                 }
-                if(userDataCache.getUsersBotState(userId)==BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
-                    return new SendMessage(update.getMessage().getChatId().toString(),
-                            BOT_WAS_NOT_ADDED_TO_CHANEL);}
                 userDataCache.createPostCreator(update.getMessage().getFrom());
                 userDataCache.setUserBotState(userId,BotState.AWAITING_POST);
                 log.info("Бот в состоянии AWAITING_POST для пользователя {}",userId);
@@ -79,9 +83,11 @@ public class CommandMenuHandler implements UpdateHandler {
                 log.info("Нажата команда /view");
                 if(userDataCache.getUsersBotState(userId)!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
                     reset(update);
-                }
                 userDataCache.setUserBotState(userId,BotState.VIEW);
-                return viewModeMessage(update);
+                return viewModeMessage(update);}
+                else{
+                    return SendMessage.builder().chatId(userId).text(BOT_WAS_NOT_ADDED_TO_CHANEL).build();
+                }
 
             case "/reset":
                 log.info("Нажата кнопка /reset");
@@ -124,7 +130,7 @@ public class CommandMenuHandler implements UpdateHandler {
         }
 
     /*Удаляет посты, которые в процессе добавления*/
-    private SendMessage reset(Update update){
+    private SendMessage reset(Update update){//FIXME - в утилс для проверки исходного статуса
         Long userId = update.getMessage().getFrom().getId();
         userDataCache.removePostCreator(userId);
         BotState botState = userDataCache.getUsersBotState(userId);

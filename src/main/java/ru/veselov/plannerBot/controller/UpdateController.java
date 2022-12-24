@@ -13,6 +13,7 @@ import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.controller.handlers.*;
 import ru.veselov.plannerBot.service.UserService;
+import ru.veselov.plannerBot.utils.MessageUtils;
 
 import java.util.Map;
 import java.util.Optional;
@@ -119,16 +120,33 @@ public class UpdateController {
                     }
                 }
         }
-        //Апдейты с текстами
 
+        //Жмет старт - получает статус не добавлен к каналу
+        //должен получить инструкцию, пока не добавлен к каналу - другие команды не работают
+        //при повторном нажатии старт - выдает приветственное сообщение и перечисление каналов (происходжит проверка каналов)
+        //Апдейты с текстами
         if(update.hasMessage()&& update.getMessage().hasText()){
+            BotState botState = userDataCache.getUsersBotState(update.getMessage().getFrom().getId());
             if(isCommand(update)){
-                bot.sendMessageBot(commandMenuHandler.processUpdate(update));
+                if(botState!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
+                    bot.sendMessageBot(commandMenuHandler.processUpdate(update));
+                }
+                else{
+                    if(update.getMessage().getText().equals("/start")
+                            ||
+                        update.getMessage().getText().equals("/help")){
+                        bot.sendMessageBot(commandMenuHandler.processUpdate(update));
+                    }
+                    else {
+                        bot.sendMessageBot(SendMessage.builder().chatId(update.getMessage().getChatId().toString())
+                                .text(MessageUtils.BOT_WAS_NOT_ADDED_TO_CHANEL).build());
+                    }
+                }
             }
-            else if(userDataCache.getUsersBotState(update.getMessage().getFrom().getId())==BotState.MANAGE){
+            else if(botState==BotState.MANAGE){
                 bot.sendMessageBot(managePostTextHandler.processUpdate(update));
             }
-            else if(userDataCache.getUsersBotState(update.getMessage().getFrom().getId())==BotState.PROMOTE_USER){
+            else if(botState==BotState.PROMOTE_USER){
                 bot.sendMessageBot(promoteUserTextHandler.processUpdate(update));
             }
         }
