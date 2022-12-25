@@ -46,6 +46,8 @@ public class MessageUtils {
     public static String POST_LIMIT = EmojiParser.parseToUnicode(":disappointed:Превышен лимит постов"+
             "\n для расширения свяжитесь с администратором, лимит постов=");
     public static String NO_PLANNED_POSTS=EmojiParser.parseToUnicode("Запланированных постов нет");
+    public static String ANOTHER_ACTION_IN_PROCESS="Закончите предыдущее действие, или нажмите /reset";
+    public static String FORWARD_MESSAGE = "Перешлите сообщение пользователя, у которого будем менять статус";
     public static String shortenString(String title){
         if(title.length()>15){
             return title.substring(0, 7) +"..."+ title.substring(title.length()-7);

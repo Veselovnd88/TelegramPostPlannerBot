@@ -30,8 +30,9 @@ public class UserActions {
         return mockUpdate;
     }
 
-    private Update userCreatePost(User user){
+    public Update userCreatePost(User user){
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
+        when(mockUpdate.getMessage()).thenReturn(mockMessage);
         when(mockUpdate.hasMessage()).thenReturn(true);
         when(mockMessage.hasEntities()).thenReturn(true);
         when(mockEntity.getType()).thenReturn("bot_command");

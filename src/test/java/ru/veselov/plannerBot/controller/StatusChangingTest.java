@@ -12,12 +12,17 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.DataCache;
+import ru.veselov.plannerBot.model.PostState;
+import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.utils.BotProperties;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 /*TODO перенести тест на по смене статусов сюда*/
@@ -35,16 +40,20 @@ public class StatusChangingTest {
     private BotProperties botProperties;
     @MockBean
     TelegramBotsApi telegramBotsApi;
+    @MockBean
+    PostService postService;
     @Autowired
     UpdateController updateController;
     UserActions actions = new UserActions();
     User user = new User();
+    List mockList;
     @BeforeEach
     public void init(){
         user.setId(-105L);
         user.setUserName("Vasya");
         user.setFirstName("Zloy");
         user.setLastName("Evil");
+        mockList = Mockito.mock(ArrayList.class);
         /*Если бота убрали из канала, то бот уходит в статус ожидания канала*/
         userDataCache.setUserBotState(user.getId(),BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
         //
@@ -85,14 +94,53 @@ public class StatusChangingTest {
     @Test
     void pressCreatePostNoChannels(){
         /*Нажатие кнопки при отсутствии подключенных каналов*/
-        updateController.processUpdate(actions.userPressStart(user));
+        updateController.processUpdate(actions.userCreatePost(user));
         assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
+    }
+    @Test
+    void createPostWhenAnotherState(){
+        /*Нажатие кнопки, когда статус бота НЕ READY TO WORK*/
+        for (BotState s : BotState.values()){
+            if(s!=BotState.READY_TO_WORK){
+                userDataCache.setUserBotState(user.getId(),s);
+                updateController.processUpdate(actions.userCreatePost(user));
+                assertEquals(s,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
     }
 
     @Test
-    void pressCreatePostWhenUserHasChannels(){
-        /*Нажатие кнопки при подключенных каналах
-        * TODO проверка смены статуса на AWAITING POST при всех статусах бота, кроме ожидания*/
+    void pressCreatePostWhenUserHasChannelsLimitIsOk(){
+        /*Нажатие кнопки при подключенных каналах*/
+        userDataCache.setUserBotState(user.getId(),BotState.READY_TO_WORK);
+        //Проверка на лимит постов//
+        when(postService.findByUserAndPostStates(user,List.of(PostState.SAVED,PostState.PLANNED))).thenReturn(mockList);
+        when(mockList.size()).thenReturn(5);
+        when(userService.getUserMaxPosts(user)).thenReturn(6);
+        updateController.processUpdate(actions.userCreatePost(user));
+        assertEquals(BotState.AWAITING_POST, userDataCache.getUsersBotState(user.getId()));
+    }
+
+    @Test
+    void pressCreatePostWhenUserHasChannelUnlimited(){
+        //Безлимитные посты
+        userDataCache.setUserBotState(user.getId(),BotState.READY_TO_WORK);
+        when(mockList.size()).thenReturn(5);
+        when(postService.findByUserAndPostStates(user,List.of(PostState.SAVED,PostState.PLANNED))).thenReturn(mockList);
+        when(userService.getUserMaxPosts(user)).thenReturn(-1);
+        updateController.processUpdate(actions.userCreatePost(user));
+        assertEquals(BotState.AWAITING_POST, userDataCache.getUsersBotState(user.getId()));
+    }
+
+    @Test
+    void pressCreatePostWhenUserHasChannelUnderLimit(){
+        //Лимит превышения
+        userDataCache.setUserBotState(user.getId(),BotState.READY_TO_WORK);
+        when(mockList.size()).thenReturn(5);
+        when(postService.findByUserAndPostStates(user,List.of(PostState.SAVED,PostState.PLANNED))).thenReturn(mockList);
+        when(userService.getUserMaxPosts(user)).thenReturn(4);
+        updateController.processUpdate(actions.userCreatePost(user));
+        assertEquals(BotState.READY_TO_WORK, userDataCache.getUsersBotState(user.getId()));
     }
 
     //TODO проверка смены статуса с AWAITING POST на AWAITING DATE

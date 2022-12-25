@@ -15,7 +15,6 @@ import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.service.UserService;
-import ru.veselov.plannerBot.utils.MessageUtils;
 import ru.veselov.plannerBot.utils.Utils;
 
 import java.util.ArrayList;
@@ -45,13 +44,12 @@ public class CommandMenuHandler implements UpdateHandler {
         Long userId = update.getMessage().getFrom().getId();
         User user = update.getMessage().getFrom();
         String receivedMessage = update.getMessage().getText();
-
+        log.info("Нажата команда {}",receivedMessage);
         switch (receivedMessage){
 /*При нажатии на старт - проверяется текущий статус, если бот не ожидает добавления в канал,
 * то пост сбрасывается (в методе reset также проверяется наличие каналов и устанавливается
 *  статус бота - ready - если есть каналы, и bot waiting если нет каналов */
             case "/start":
-                log.info("Нажата команда /start");
                 if(userDataCache.getUsersBotState(userId)!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
                     reset(update);
                 }
@@ -64,23 +62,23 @@ public class CommandMenuHandler implements UpdateHandler {
 *Если не превышает - проверяем, присоединен ли бот к каналам, и если да, то переводим состояние в
 * Ожидание поста */
             case "/create":
-                log.info("Нажата команда /create");
-/*  FIXME проверяется в классе выше              if(userDataCache.getUsersBotState(userId)==BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
-                    return new SendMessage(update.getMessage().getChatId().toString(),
-                            BOT_WAS_NOT_ADDED_TO_CHANEL);}*/
-                List<Post> byUser = postService.findByUserAndPostStates(user,
-                        List.of(PostState.SAVED,PostState.PLANNED));
-                int max = userService.getUserMaxPosts(user);
-                if(max!=-1 && byUser.size()>=max){
-                    return new SendMessage(userId.toString(),POST_LIMIT+max);
+                if(BotState.READY_TO_WORK==userDataCache.getUsersBotState(userId)){
+                    List<Post> byUser = postService.findByUserAndPostStates(user,
+                            List.of(PostState.SAVED,PostState.PLANNED));
+                    int max = userService.getUserMaxPosts(user);
+                    if(max!=-1 && byUser.size()>=max){
+                        return new SendMessage(userId.toString(),POST_LIMIT+max);
+                    }
+                    userDataCache.createPostCreator(update.getMessage().getFrom());
+                    userDataCache.setUserBotState(userId,BotState.AWAITING_POST);
+                    return utils.removeKeyBoard(new SendMessage(update.getMessage().getChatId().toString(),
+                            AWAIT_CONTENT_MESSAGE));}
+                else{
+                   return utils.removeKeyBoard(SendMessage.builder().chatId(userId)
+                            .text(ANOTHER_ACTION_IN_PROCESS).build());
                 }
-                userDataCache.createPostCreator(update.getMessage().getFrom());
-                userDataCache.setUserBotState(userId,BotState.AWAITING_POST);
-                log.info("Бот в состоянии AWAITING_POST для пользователя {}",userId);
-                return utils.removeKeyBoard(new SendMessage(update.getMessage().getChatId().toString(),
-                        AWAIT_CONTENT_MESSAGE));
             case "/view":
-                log.info("Нажата команда /view");
+                //FIXME добавить проверку что бот в статусе Готов к работе
                 if(userDataCache.getUsersBotState(userId)!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
                     reset(update);
                 userDataCache.setUserBotState(userId,BotState.VIEW);
@@ -90,29 +88,22 @@ public class CommandMenuHandler implements UpdateHandler {
                 }
 
             case "/reset":
-                log.info("Нажата кнопка /reset");
                 return utils.removeKeyBoard(reset(update));
 
             case "/help":
                 reset(update);
-                log.info("Нажата кнопка /help");
                 return utils.removeKeyBoard(new SendMessage(String.valueOf(update.getMessage().getChatId()),
                         HELP_MESSAGE));
 
             case "/promote":
+                //FIXME проверить что бот в статусе готов к работе
                  userDataCache.setUserBotState(userId,BotState.PROMOTE_USER);
-                 log.info("Нажата кнопка /promote");
                  return utils.removeKeyBoard(
                          SendMessage.builder().chatId(String.valueOf(update.getMessage().getChatId()))
-                                 .text("Перешлите сообщение пользователя, у которого будем менять статус").build()
+                                 .text(FORWARD_MESSAGE).build()
                  );
-                //ввести имя/фамилию или ID пользователя
-                //получить список по имеющимся данным
-                //далее выдать клавиатуру (inline) для конкретного пользователя
-                //при нажатии вывести его имя и дать inline клавиатуру для выбора статуса
-                //сохранить и дать сообщение об успешном сохранении
         }
-        return utils.removeKeyBoard(new SendMessage(String.valueOf(update.getMessage().getChatId()), MessageUtils.UNKNOWN_COMMAND));
+        return utils.removeKeyBoard(SendMessage.builder().chatId(userId).text(UNKNOWN_COMMAND).build());
     }
 
     private SendMessage greetings(Update update){
