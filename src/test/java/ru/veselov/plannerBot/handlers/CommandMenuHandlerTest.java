@@ -54,7 +54,7 @@ class CommandMenuHandlerTest {
 
     @BeforeEach
     void init(){
-        mockPostCreator =Mockito.mock(PostCreator.class);
+        mockPostCreator = Mockito.mock(PostCreator.class);
         when(mockUpdate.getMessage()).thenReturn(mockMessage);
         when(mockMessage.getFrom()).thenReturn(mockUser);
         when(mockUser.getId()).thenReturn(1L);

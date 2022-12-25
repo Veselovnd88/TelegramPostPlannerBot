@@ -130,7 +130,7 @@ public class CommandMenuHandler implements UpdateHandler {
         }
 
     /*Удаляет посты, которые в процессе добавления*/
-    private SendMessage reset(Update update){//FIXME - в утилс для проверки исходного статуса
+    private SendMessage reset(Update update){
         Long userId = update.getMessage().getFrom().getId();
         userDataCache.removePostCreator(userId);
         BotState botState = userDataCache.getUsersBotState(userId);

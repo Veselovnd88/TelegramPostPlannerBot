@@ -28,6 +28,7 @@ import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.utils.BotProperties;
 
 import java.text.SimpleDateFormat;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -77,6 +78,7 @@ public class UpdateControllerTest {
     public ChatMemberUpdated chatMemberUpdated = Mockito.mock(ChatMemberUpdated.class);
     public ChatMember mockChatMember = Mockito.mock(ChatMember.class);
     public CallbackQuery mockCallBack = Mockito.mock(CallbackQuery.class);
+    public MessageEntity mockEntity = Mockito.mock(MessageEntity.class);
 
 
     @BeforeEach
@@ -118,20 +120,23 @@ public class UpdateControllerTest {
         }
         assertEquals(0,userDataCache.getPostCreators().size());
     }
+    /////////////////
+
 
     @Test
     void checkStates(){
         user.setId(-105L);
-        assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
         //старт-сброс
-        userPressStart(user);
+        userPressStart(user);//старт, каналов нет
         assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
-        userReset(user);
+        userCreatePost(user);//создать пост, но каналов нет
+        assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
+        userReset(user);//сброс, каналов нет
         assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
         //Добавили в канал - начали создавать пост-сбросили
-        userAddToChannels(user);
+        userAddToChannels(user); //добавили в канал
         assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
-        userCreatePost(user);
+        userCreatePost(user);//создаем пост
         assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
         userReset(user);
         assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
@@ -169,7 +174,7 @@ public class UpdateControllerTest {
         userPressButtonForChoseChanel(user);
         assertEquals(BotState.AWAITING_DATE,userDataCache.getUsersBotState(user.getId()));
         userInputDate(user, "19.12.2022 16 00");
-        assertEquals(BotState.AWAITING_DATE, userDataCache.getUsersBotState(user.getId()));
+        assertEquals(BotState.READY_TO_SAVE, userDataCache.getUsersBotState(user.getId()));
         userReset(user);
         assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
         assertEquals(0,userDataCache.getPostCreators().size());
@@ -185,7 +190,7 @@ public class UpdateControllerTest {
         userPressButtonForChoseChanel(user);
         assertEquals(BotState.AWAITING_DATE,userDataCache.getUsersBotState(user.getId()));
         userInputDate(user, "19.12.2022 16 00");
-        assertEquals(BotState.AWAITING_DATE, userDataCache.getUsersBotState(user.getId()));
+        assertEquals(BotState.READY_TO_SAVE, userDataCache.getUsersBotState(user.getId()));
         userPressButtonSave(user);
         assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
         //удаление за собой
@@ -259,6 +264,9 @@ public class UpdateControllerTest {
         when(mockMessage.getFrom()).thenReturn(user);
         when(mockMessage.getText()).thenReturn("/start");
         when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockMessage.hasEntities()).thenReturn(true);
+        when(mockEntity.getType()).thenReturn("bot_command");
+        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
         updateController.processUpdate(mockUpdate);
     }
@@ -289,6 +297,9 @@ public class UpdateControllerTest {
     private void userCreatePost(User user){
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
         when(mockUpdate.hasMessage()).thenReturn(true);
+        when(mockMessage.hasEntities()).thenReturn(true);
+        when(mockEntity.getType()).thenReturn("bot_command");
+        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
         when(mockUpdate.hasMyChatMember()).thenReturn(false);
         when(mockMessage.hasText()).thenReturn(true);
         when(mockMessage.getFrom()).thenReturn(user);
@@ -327,6 +338,9 @@ public class UpdateControllerTest {
         when(mockMessage.getFrom()).thenReturn(user);
         when(mockUpdate.hasMyChatMember()).thenReturn(false);
         when(mockMessage.hasText()).thenReturn(true);
+        when(mockMessage.hasEntities()).thenReturn(true);
+        when(mockEntity.getType()).thenReturn("_");
+        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
         when(mockMessage.getChatId()).thenReturn(user.getId());
         when(mockMessage.getText()).thenReturn(date);
         updateController.processUpdate(mockUpdate);
@@ -352,6 +366,9 @@ public class UpdateControllerTest {
         when(mockMessage.hasText()).thenReturn(true);
         when(mockMessage.getChatId()).thenReturn(user.getId());
         when(mockMessage.getText()).thenReturn("/reset");
+        when(mockMessage.hasEntities()).thenReturn(true);
+        when(mockEntity.getType()).thenReturn("bot_command");
+        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
         updateController.processUpdate(mockUpdate);
     }
 

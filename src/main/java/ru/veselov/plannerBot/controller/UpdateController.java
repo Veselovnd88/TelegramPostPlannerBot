@@ -134,7 +134,8 @@ public class UpdateController {
                 else{
                     if(update.getMessage().getText().equals("/start")
                             ||
-                        update.getMessage().getText().equals("/help")){
+                        update.getMessage().getText().equals("/help")
+                            ||update.getMessage().getText().equals("/promote")){
                         bot.sendMessageBot(commandMenuHandler.processUpdate(update));
                     }
                     else {
@@ -152,7 +153,9 @@ public class UpdateController {
         }
         //Обработка коллбэков
         if(update.hasCallbackQuery()){
-           bot.sendMessageBot(callBackQueriesHandler.processUpdate(update));
+           BotState botState = userDataCache.getUsersBotState(update.getCallbackQuery().getFrom().getId());
+           if(botState!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
+               bot.sendMessageBot(callBackQueriesHandler.processUpdate(update));}
         }
     }
 
@@ -164,7 +167,5 @@ public class UpdateController {
         }
         return false;
     }
-                /*List<String> commands = new ArrayList<>(List.of("/start", "/view", "/reset", "/help", "/create"));
-        return commands.contains(string);*/
 
 }
