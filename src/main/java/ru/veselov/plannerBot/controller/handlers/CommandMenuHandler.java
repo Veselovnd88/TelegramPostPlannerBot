@@ -65,9 +65,9 @@ public class CommandMenuHandler implements UpdateHandler {
 * Ожидание поста */
             case "/create":
                 log.info("Нажата команда /create");
-                if(userDataCache.getUsersBotState(userId)==BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
+/*  FIXME проверяется в классе выше              if(userDataCache.getUsersBotState(userId)==BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
                     return new SendMessage(update.getMessage().getChatId().toString(),
-                            BOT_WAS_NOT_ADDED_TO_CHANEL);}
+                            BOT_WAS_NOT_ADDED_TO_CHANEL);}*/
                 List<Post> byUser = postService.findByUserAndPostStates(user,
                         List.of(PostState.SAVED,PostState.PLANNED));
                 int max = userService.getUserMaxPosts(user);

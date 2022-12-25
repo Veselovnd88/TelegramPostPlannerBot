@@ -16,10 +16,15 @@ _______________
 - TelegramApi для Java: https://github.com/rubenlagus/TelegramApi
 __________
 Бот реализован на вебхуках, для работы требуется назначить переменные среды:
-- имя бота
-- токен
-- логин Postgresql
-- пароль Postgresql
+- имя бота: PL_BOT_NAME=
+- токен: PL_BOT_TOKEN=
+- логин Postgresql: POSTGRES_NAME=
+- пароль Postgresql: POSTGRES_PASSWORD=
+В application.yml указать:
+- spring.datasource.url:адрес базы данных;
+- bot.adminId: телеграм ID администратора;
+- bot.webhookpath: ссылка на вебхук;
+- 
 
 Бот задеплоен на VPS сервере с Linux, SSL сертификат подгружается сервером apache2,
 с переадресацией запроса в наше приложение. 

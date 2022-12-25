@@ -62,7 +62,7 @@ public class UserService {
     }
     /*Обновление данных пользователя*/
     @Transactional
-    public void saveUser(UserEntity dto){//FIXME поменять изменения статуса а сюда передавать объект User
+    public void saveUser(UserEntity dto){
         Optional<UserEntity> byUserId = userRepository.findByUserId(dto.getUserId());
         if(byUserId.isPresent()){
             UserEntity userEntity = byUserId.get();

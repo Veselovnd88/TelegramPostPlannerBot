@@ -29,4 +29,18 @@ public class UserActions {
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
         return mockUpdate;
     }
+
+    private Update userCreatePost(User user){
+        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
+        when(mockUpdate.hasMessage()).thenReturn(true);
+        when(mockMessage.hasEntities()).thenReturn(true);
+        when(mockEntity.getType()).thenReturn("bot_command");
+        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
+        when(mockUpdate.hasMyChatMember()).thenReturn(false);
+        when(mockMessage.hasText()).thenReturn(true);
+        when(mockMessage.getFrom()).thenReturn(user);
+        when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockMessage.getText()).thenReturn("/create");
+        return mockUpdate;
+    }
 }
