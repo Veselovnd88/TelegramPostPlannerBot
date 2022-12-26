@@ -2,10 +2,7 @@ package ru.veselov.plannerBot.controller;
 
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.MessageEntity;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.*;
 
 import java.util.List;
 
@@ -15,10 +12,14 @@ public class UserActions {
     public Update mockUpdate= Mockito.mock(Update.class);
     public Message mockMessage=Mockito.mock(Message.class);
     public MessageEntity mockEntity= Mockito.mock(MessageEntity.class);
+    public CallbackQuery mockCallBack=Mockito.mock(CallbackQuery.class);
+
+    public UserActions(){
+        when(mockUpdate.getMessage()).thenReturn(mockMessage);
+    }
     public Update userPressStart(User user){
         /*Пользователь жмет старт*/
         when(mockUpdate.hasMessage()).thenReturn(true);
-        when(mockUpdate.getMessage()).thenReturn(mockMessage);
         when(mockMessage.hasText()).thenReturn(true);
         when(mockMessage.getFrom()).thenReturn(user);
         when(mockMessage.getText()).thenReturn("/start");
@@ -32,7 +33,6 @@ public class UserActions {
 
     public Update userCreatePost(User user){
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
-        when(mockUpdate.getMessage()).thenReturn(mockMessage);
         when(mockUpdate.hasMessage()).thenReturn(true);
         when(mockMessage.hasEntities()).thenReturn(true);
         when(mockEntity.getType()).thenReturn("bot_command");
@@ -42,6 +42,30 @@ public class UserActions {
         when(mockMessage.getFrom()).thenReturn(user);
         when(mockMessage.getChatId()).thenReturn(user.getId());
         when(mockMessage.getText()).thenReturn("/create");
+        return mockUpdate;
+    }
+
+    public Update userSendText(User user){
+        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
+        when(mockUpdate.hasMessage()).thenReturn(true);
+        when(mockUpdate.hasMyChatMember()).thenReturn(false);
+        when(mockMessage.getFrom()).thenReturn(user);
+        when(mockMessage.hasText()).thenReturn(true);
+        when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockMessage.getText()).thenReturn("Тестовый текст");
+        return mockUpdate;
+    }
+
+    public Update userPressButtonForChoseChanel(User user, String chatName){
+        when(mockUpdate.hasMyChatMember()).thenReturn(false);
+        when(mockUpdate.hasMessage()).thenReturn(false);
+        when(mockUpdate.hasCallbackQuery()).thenReturn(true);
+        when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
+        when(mockUpdate.getCallbackQuery().getId()).thenReturn("1");
+        when(mockCallBack.getData()).thenReturn(chatName);
+        when(mockCallBack.getFrom()).thenReturn(user);
+        when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockCallBack.getMessage()).thenReturn(mockMessage);
         return mockUpdate;
     }
 }

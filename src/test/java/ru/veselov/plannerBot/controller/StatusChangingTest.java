@@ -142,8 +142,45 @@ public class StatusChangingTest {
         updateController.processUpdate(actions.userCreatePost(user));
         assertEquals(BotState.READY_TO_WORK, userDataCache.getUsersBotState(user.getId()));
     }
+    @Test
+    void userSentContentText(){
+        //Проверка на то, что апдейт попадает в этот метод, только при статусе ожидания поста
+        userDataCache.setUserBotState(user.getId(),BotState.AWAITING_POST);
+        userDataCache.createPostCreator(user);
+        updateController.processUpdate(actions.userSendText(user));
+        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
+    }
 
-    //TODO проверка смены статуса с AWAITING POST на AWAITING DATE
+    @Test
+    void userSentContentTextAnotherBotStates(){
+        //Проверка на то, что апдейт никогда не попадет в метод, при других статусах
+        for (BotState s : BotState.values()){
+            if(s!=BotState.AWAITING_POST){
+                userDataCache.setUserBotState(user.getId(),s);
+                userDataCache.createPostCreator(user);
+                updateController.processUpdate(actions.userSendText(user));
+                assertEquals(s,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
+    }
+    @Test
+    void userPressSavePostButton(){
+        //Проверка изменения статуса при нажатии кнопки сохранить пост в канал
+        userDataCache.setUserBotState(user.getId(),BotState.AWAITING_POST);
+        userDataCache.createPostCreator(user);
+        userDataCache.getPostCreator(user.getId()).addText("Text");
+        Chat chat = new Chat();
+        chat.setId(2L);
+        String chatName = "test1";
+        chat.setTitle(chatName);
+        when(userService.findAllChatsByUser(user)).thenReturn(Set.of(chat));
+        updateController.processUpdate(actions.userPressButtonForChoseChanel(user,chatName));
+        assertEquals(BotState.AWAITING_DATE, userDataCache.getUsersBotState(user.getId()));
+        //Когда нажали Запостить во все чаты
+        updateController.processUpdate(actions.userPressButtonForChoseChanel(user,"postAll"));
+        assertEquals(BotState.AWAITING_DATE, userDataCache.getUsersBotState(user.getId()));
+    }
+
     //TODO проверка смены статуса c AWAITING DATE на READY TO SAVE
     //TODO проверка смены статуса с READY TO SAVE на READY TO WORK
 
