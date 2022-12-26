@@ -22,10 +22,10 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
-/*TODO перенести тест на по смене статусов сюда*/
 @SpringBootTest
 @Disabled
 public class StatusChangingTest {
@@ -153,13 +153,13 @@ public class StatusChangingTest {
 
     @Test
     void userSentContentTextAnotherBotStates(){
-        //Проверка на то, что апдейт никогда не попадет в метод, при других статусах
+        //Проверка на то, что в из других состояний метод не изменит статус бота
         for (BotState s : BotState.values()){
             if(s!=BotState.AWAITING_POST){
                 userDataCache.setUserBotState(user.getId(),s);
                 userDataCache.createPostCreator(user);
                 updateController.processUpdate(actions.userSendText(user));
-                assertEquals(s,userDataCache.getUsersBotState(user.getId()));
+                assertNotEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
             }
         }
     }
@@ -181,8 +181,96 @@ public class StatusChangingTest {
         assertEquals(BotState.AWAITING_DATE, userDataCache.getUsersBotState(user.getId()));
     }
 
-    //TODO проверка смены статуса c AWAITING DATE на READY TO SAVE
-    //TODO проверка смены статуса с READY TO SAVE на READY TO WORK
+    @Test
+    void pressSaveAnotherStates(){
+        //Проверка на то, что из другого состояния метод не изменит состояние бота на ожидание даты
+        userDataCache.createPostCreator(user);
+        userDataCache.getPostCreator(user.getId()).addText("Text");
+        for(BotState s: BotState.values()){
+            if(s!=BotState.AWAITING_POST){
+                updateController.processUpdate(actions.userPressButtonForChoseChanel(user,"postAll"));
+                assertNotEquals(BotState.AWAITING_DATE,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
+    }
+    @Test
+    void userChooseDate(){
+        userDataCache.setUserBotState(user.getId(),BotState.AWAITING_DATE);
+        userDataCache.createPostCreator(user);
+        userDataCache.getPostCreator(user.getId()).addText("Text");
+        updateController.processUpdate(actions.userInputDate(user,"31.12.2022 15 00"));
+        assertEquals(BotState.READY_TO_SAVE,userDataCache.getUsersBotState(user.getId()));
+    }
+    @Test
+    void userChooseDateWrongState(){
+        //Проверка на то, что метод переведет бота в статус READY_TO SAVE только из статуса ожидания сохранения
+        userDataCache.createPostCreator(user);
+        userDataCache.getPostCreator(user.getId()).addText("Text");
+        for(BotState s: BotState.values()){
+            if(s!=BotState.AWAITING_DATE){
+                updateController.processUpdate(actions.userInputDate(user,"31.12.2022 15 00"));
+                assertNotEquals(BotState.READY_TO_SAVE,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
+    }
+
+    @Test
+    void userSaveDate(){
+        //Проверка изменения статуса после сохранения даты, переход в базовое состояние
+        userDataCache.setUserBotState(user.getId(),BotState.READY_TO_SAVE);
+        userDataCache.createPostCreator(user);
+        userDataCache.getPostCreator(user.getId()).addText("Text");
+        updateController.processUpdate(actions.userSavedDate(user));
+        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
+    }
+    @Test
+    void userSaveDateWrongState(){
+        //Проверка на то, что метод переведет бота в базовый статус только из состояния READY_TO_SAVE
+        userDataCache.createPostCreator(user);
+        userDataCache.getPostCreator(user.getId()).addText("Text");
+        for(BotState s: BotState.values()){
+            if(s!=BotState.READY_TO_SAVE){
+                updateController.processUpdate(actions.userSavedDate(user));
+                assertNotEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
+    }
+
+    @Test
+    void userPressAgainInputDate(){
+        //Проверка того, что статус меняется на ожидание даты при нажатии пользователем кнопки о выборе другой даты
+        userDataCache.setUserBotState(user.getId(),BotState.READY_TO_SAVE);
+        userDataCache.createPostCreator(user);
+        userDataCache.getPostCreator(user.getId()).addText("Text");
+        updateController.processUpdate(actions.userInputDateAgain(user));
+        assertEquals(BotState.AWAITING_DATE,userDataCache.getUsersBotState(user.getId()));
+    }
+    @Test
+    void userPressAgainInputDateWrongStateTest(){
+        //Проверка на то, что метод меняет статус только из состояния Ready to save
+        userDataCache.createPostCreator(user);
+        userDataCache.getPostCreator(user.getId()).addText("Text");
+        for(BotState s: BotState.values()){
+            if(s!=BotState.READY_TO_SAVE){
+                updateController.processUpdate(actions.userInputDateAgain(user));
+                assertNotEquals(BotState.AWAITING_DATE,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
+    }
+
+    @Test
+    void resetTest(){
+        userDataCache.setUserBotState(user.getId(),BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
+        updateController.processUpdate(actions.userReset(user));
+        assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
+        for(BotState s: BotState.values()){
+            if(s!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
+                updateController.processUpdate(actions.userReset(user));
+                assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
+    }
+
 
     //TODO проверка сброса статуса командой reset
     //TODO проверка help из любого статуса

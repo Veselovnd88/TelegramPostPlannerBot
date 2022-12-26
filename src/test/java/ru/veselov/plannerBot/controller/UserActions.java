@@ -6,6 +6,7 @@ import org.telegram.telegrambots.meta.api.objects.*;
 
 import java.util.List;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class UserActions {
@@ -68,4 +69,53 @@ public class UserActions {
         when(mockCallBack.getMessage()).thenReturn(mockMessage);
         return mockUpdate;
     }
+
+    public Update userInputDate(User user,String date){
+        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
+        when(mockUpdate.hasMessage()).thenReturn(true);
+        when(mockMessage.getFrom()).thenReturn(user);
+        when(mockUpdate.hasMyChatMember()).thenReturn(false);
+        when(mockMessage.hasText()).thenReturn(true);
+        when(mockMessage.hasEntities()).thenReturn(true);
+        when(mockEntity.getType()).thenReturn("_");
+        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
+        when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockMessage.getText()).thenReturn(date);
+        return mockUpdate;
+    }
+
+    public Update userSavedDate(User user){
+        when(mockUpdate.hasCallbackQuery()).thenReturn(true);
+        when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
+        when(mockCallBack.getData()).thenReturn("saveYes");
+        when(mockCallBack.getId()).thenReturn("1");
+        when(mockCallBack.getFrom()).thenReturn(user);
+        return mockUpdate;
+    }
+
+    public Update userInputDateAgain(User user){
+        when(mockUpdate.hasCallbackQuery()).thenReturn(true);
+        when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
+        when(mockCallBack.getData()).thenReturn("inputDate");
+        when(mockCallBack.getId()).thenReturn("1");
+        when(mockCallBack.getMessage()).thenReturn(mockMessage);
+        when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockCallBack.getFrom()).thenReturn(user);
+        return mockUpdate;
+    }
+
+    public Update userReset(User user){
+        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
+        when(mockUpdate.hasMessage()).thenReturn(true);
+        when(mockUpdate.hasMyChatMember()).thenReturn(false);
+        when(mockMessage.getFrom()).thenReturn(user);
+        when(mockMessage.hasText()).thenReturn(true);
+        when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockMessage.getText()).thenReturn("/reset");
+        when(mockMessage.hasEntities()).thenReturn(true);
+        when(mockEntity.getType()).thenReturn("bot_command");
+        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
+        return mockUpdate;
+    }
+
 }
