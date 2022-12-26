@@ -10,7 +10,7 @@ logging:
 bot:
   name: ${PL_BOT_NAME}
   token: ${PL_BOT_TOKEN}
-  webhookpath: https://b887-2a00-1fa0-4a0f-7d97-684-d3d3-6bcf-f408.eu.ngrok.io
+  webhookpath: https://2ffa-93-174-229-214.eu.ngrok.io
   adminId: 101516610
   status:
     standard: 10

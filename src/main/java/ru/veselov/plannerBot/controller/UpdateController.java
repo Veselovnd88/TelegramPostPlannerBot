@@ -3,6 +3,7 @@ package ru.veselov.plannerBot.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
@@ -20,7 +21,7 @@ import java.util.Optional;
 
 @Component
 @Slf4j
-public class UpdateController {
+public class UpdateController implements UpdateHandler {
 
     private final MyPreciousBot bot;
     private final CreatePostHandler createPostHandler;
@@ -49,7 +50,7 @@ public class UpdateController {
         this.userService = userService;
     }
 
-    public void processUpdate(Update update){
+    public BotApiMethod<?> processUpdate(Update update){
        //Проверка присоединения к каналу
         if(update.hasMyChatMember()){
             try {
@@ -64,8 +65,7 @@ public class UpdateController {
                         userService.save(chat,user);
                         userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
                         log.info("Бот добавлен в канал {} пользователя {}", chat.getTitle(), userId);
-                        bot.sendMessageBot(new SendMessage(userId.toString(),
-                                "Вы присоединили меня к каналу "+chat.getTitle()));
+                        return SendMessage.builder().chatId(userId).text("Вы присоединили меня к каналу "+chat.getTitle()).build();
                     }
                     //Если статус был left - то удаляем чат из списка, проверяем если список пустой,
                     //изменяем состояние бота
@@ -85,17 +85,16 @@ public class UpdateController {
                             }
                             if(update.getMyChatMember().getNewChatMember().getStatus().equalsIgnoreCase("left")){
                                 userService.removeChat(chat.getId().toString());
-                                bot.sendMessageBot(new SendMessage(pair.getKey().toString(),
-                                        "Я больше не админ канала "+chat.getTitle()));
+                                return SendMessage.builder().chatId(pair.getKey()).text("Я больше не админ канала "+chat.getTitle()).build();
                             }
                             if(update.getMyChatMember().getNewChatMember().getStatus().equalsIgnoreCase("kicked")){
                                 userService.removeChat(chat.getId().toString());
-                                bot.sendMessageBot(new SendMessage(pair.getKey().toString(),
-                                        "Я кикнут с канала "+chat.getTitle()+"чтобы продолжить работу удалите меня из администраторов, и присоедините снова"));
+                                return SendMessage.builder().chatId(pair.getKey()).text(
+                                        "Я кикнут с канала "+chat.getTitle()+"чтобы продолжить работу удалите меня из администраторов, и присоедините снова").build();
                             }
                         }
                     }
-                    return;
+                    return null ;
                 }
             } catch (TelegramApiException e) {
                 log.error("Ошибка при присоединении бота к каналу: {}", e.getMessage());
@@ -111,12 +110,12 @@ public class UpdateController {
                     ||update.getMessage().hasVideo()
                     ||update.getMessage().hasDocument()
                     ||update.getMessage().hasPoll())&&!isCommand(update)) {
-                        bot.sendMessageBot(createPostHandler.processUpdate(update));
+                        return createPostHandler.processUpdate(update);
                         }
                     }
                 if(userDataCache.getUsersBotState(userId)==BotState.AWAITING_DATE){
                     if(!isCommand(update)){
-                        bot.sendMessageBot(chooseDateHandler.processUpdate(update));
+                        return chooseDateHandler.processUpdate(update);
                     }
                 }
         }
@@ -129,34 +128,35 @@ public class UpdateController {
             BotState botState = userDataCache.getUsersBotState(update.getMessage().getFrom().getId());
             if(isCommand(update)){
                 if(botState!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
-                    bot.sendMessageBot(commandMenuHandler.processUpdate(update));
+                    return commandMenuHandler.processUpdate(update);
                 }
                 else{
                     if(update.getMessage().getText().equals("/start")
                             ||
                         update.getMessage().getText().equals("/help")
                             ||update.getMessage().getText().equals("/promote")){
-                        bot.sendMessageBot(commandMenuHandler.processUpdate(update));
+                        return commandMenuHandler.processUpdate(update);
                     }
                     else {
-                        bot.sendMessageBot(SendMessage.builder().chatId(update.getMessage().getChatId().toString())
-                                .text(MessageUtils.BOT_WAS_NOT_ADDED_TO_CHANEL).build());
+                        return SendMessage.builder().chatId(update.getMessage().getChatId().toString())
+                                .text(MessageUtils.BOT_WAS_NOT_ADDED_TO_CHANEL).build();
                     }
                 }
             }
             else if(botState==BotState.MANAGE){
-                bot.sendMessageBot(managePostTextHandler.processUpdate(update));
+                return managePostTextHandler.processUpdate(update);
             }
             else if(botState==BotState.PROMOTE_USER){
-                bot.sendMessageBot(promoteUserTextHandler.processUpdate(update));
+                return promoteUserTextHandler.processUpdate(update);
             }
         }
         //Обработка коллбэков
         if(update.hasCallbackQuery()){
            BotState botState = userDataCache.getUsersBotState(update.getCallbackQuery().getFrom().getId());
            if(botState!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
-               bot.sendMessageBot(callBackQueriesHandler.processUpdate(update));}
+              return callBackQueriesHandler.processUpdate(update);}
         }
+        return null;
     }
 
     private boolean isCommand(Update update) {

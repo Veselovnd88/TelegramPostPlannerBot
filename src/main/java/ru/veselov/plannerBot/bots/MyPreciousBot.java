@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -30,7 +31,7 @@ import java.util.List;
 @Component
 @Getter
 @Setter
-public class MyPreciousBot extends TelegramLongPollingBot {
+public class MyPreciousBot extends TelegramWebhookBot {
 
     private final UpdateController updateController;
     private final TelegramBotsApi telegramBotsApi;
@@ -55,7 +56,7 @@ public class MyPreciousBot extends TelegramLongPollingBot {
         commandsAdmin.add(promoteCommand);
 
         try {
-            telegramBotsApi.registerBot(this);
+            telegramBotsApi.registerBot(this,setWebhook);
             this.execute(new SetMyCommands(commandList, new BotCommandScopeDefault(), null));
             this.execute(new SetMyCommands(commandsAdmin,botCommandScopeChat,null));
             log.info("Меню установлено");
@@ -75,12 +76,6 @@ public class MyPreciousBot extends TelegramLongPollingBot {
         return botProperties.getToken();
     }
 
-    @Override
-    public void onUpdateReceived(Update update) {
-        if(update!=null){
-            updateController.processUpdate(update);
-        }
-    }
 
 
     ////////////////////////
@@ -101,4 +96,17 @@ public class MyPreciousBot extends TelegramLongPollingBot {
                 log.error(e.getMessage());
             }
         }
+
+    @Override
+    public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
+        if(update!=null){
+            return updateController.processUpdate(update);
+        }
+        else return null;
+    }
+
+    @Override
+    public String getBotPath() {
+        return botProperties.getWebHookPath();
+    }
 }
