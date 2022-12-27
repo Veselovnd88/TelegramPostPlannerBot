@@ -260,22 +260,60 @@ public class StatusChangingTest {
 
     @Test
     void resetTest(){
+        //Проверка нажатия /reset
         userDataCache.setUserBotState(user.getId(),BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
         updateController.processUpdate(actions.userReset(user));
         assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
         for(BotState s: BotState.values()){
             if(s!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
+                userDataCache.setUserBotState(user.getId(),s);
                 updateController.processUpdate(actions.userReset(user));
                 assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
             }
         }
     }
 
+    @Test
+    void helpTest(){
+        //Проверка нажатия /help, т.к. внутри срабатывает reset - поведение аналогичное reset
+        userDataCache.setUserBotState(user.getId(),BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
+        updateController.processUpdate(actions.userPressHelp(user));
+        assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
+        for(BotState s: BotState.values()){
+            if(s!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
+                userDataCache.setUserBotState(user.getId(),s);
+                updateController.processUpdate(actions.userReset(user));
+                assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
+    }
+    @Test
+    void viewTest(){
+        //Проверка изменения состояния при нажатии кнопки /view
+        userDataCache.setUserBotState(user.getId(),BotState.READY_TO_WORK);
+        updateController.processUpdate(actions.userPressView(user));
+        assertEquals(BotState.VIEW,userDataCache.getUsersBotState(user.getId()));
+    }
+    @Test
+    void viewTestWrongStatus(){
+        //Проверка на то, что метод метод отрабатывает только из состояния READY TO WORK
+        for(BotState s: BotState.values()){
+            if(s!=BotState.READY_TO_WORK){
+                userDataCache.setUserBotState(user.getId(),s);
+                updateController.processUpdate(actions.userPressView(user));
+                assertEquals(s,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
+    }
 
-    //TODO проверка сброса статуса командой reset
-    //TODO проверка help из любого статуса
+
+
+
+
+
+
+
     //TODO проверка promote из любого статуса
-    //TODO проверка VIEW
     //TODO проверка MANAGE
 
 

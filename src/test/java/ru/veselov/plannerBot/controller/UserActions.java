@@ -19,7 +19,7 @@ public class UserActions {
         when(mockUpdate.getMessage()).thenReturn(mockMessage);
     }
     public Update userPressStart(User user){
-        /*Пользователь жмет старт*/
+        /*Пользователь жмет /start*/
         when(mockUpdate.hasMessage()).thenReturn(true);
         when(mockMessage.hasText()).thenReturn(true);
         when(mockMessage.getFrom()).thenReturn(user);
@@ -33,6 +33,7 @@ public class UserActions {
     }
 
     public Update userCreatePost(User user){
+        /*Пользователь жмет /create*/
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
         when(mockUpdate.hasMessage()).thenReturn(true);
         when(mockMessage.hasEntities()).thenReturn(true);
@@ -47,6 +48,7 @@ public class UserActions {
     }
 
     public Update userSendText(User user){
+        /*Пользователь вводит текст*/
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
         when(mockUpdate.hasMessage()).thenReturn(true);
         when(mockUpdate.hasMyChatMember()).thenReturn(false);
@@ -58,6 +60,7 @@ public class UserActions {
     }
 
     public Update userPressButtonForChoseChanel(User user, String chatName){
+        /*Пользователь выбирает каналы*/
         when(mockUpdate.hasMyChatMember()).thenReturn(false);
         when(mockUpdate.hasMessage()).thenReturn(false);
         when(mockUpdate.hasCallbackQuery()).thenReturn(true);
@@ -71,6 +74,7 @@ public class UserActions {
     }
 
     public Update userInputDate(User user,String date){
+        /*Пользователь вводит дату(вручную)*/
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
         when(mockUpdate.hasMessage()).thenReturn(true);
         when(mockMessage.getFrom()).thenReturn(user);
@@ -85,6 +89,7 @@ public class UserActions {
     }
 
     public Update userSavedDate(User user){
+        /*Пользователь жмет сохранить после ввода даты*/
         when(mockUpdate.hasCallbackQuery()).thenReturn(true);
         when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
         when(mockCallBack.getData()).thenReturn("saveYes");
@@ -94,6 +99,7 @@ public class UserActions {
     }
 
     public Update userInputDateAgain(User user){
+        /*Пользователь нажимет ввести дату снова*/
         when(mockUpdate.hasCallbackQuery()).thenReturn(true);
         when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
         when(mockCallBack.getData()).thenReturn("inputDate");
@@ -105,6 +111,7 @@ public class UserActions {
     }
 
     public Update userReset(User user){
+        /*Пользователь жмет /reset*/
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
         when(mockUpdate.hasMessage()).thenReturn(true);
         when(mockUpdate.hasMyChatMember()).thenReturn(false);
@@ -118,4 +125,31 @@ public class UserActions {
         return mockUpdate;
     }
 
+    public Update userPressHelp(User user){
+        /*Пользователь жмет /help*/
+        when(mockUpdate.hasMessage()).thenReturn(true);
+        when(mockMessage.hasText()).thenReturn(true);
+        when(mockMessage.getFrom()).thenReturn(user);
+        when(mockMessage.getText()).thenReturn("/help");
+        when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockMessage.hasEntities()).thenReturn(true);
+        when(mockEntity.getType()).thenReturn("bot_command");
+        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
+        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
+        return mockUpdate;
+    }
+
+    public Update userPressView(User user){
+        /*Пользователь жмет /view*/
+        when(mockUpdate.hasMessage()).thenReturn(true);
+        when(mockMessage.hasText()).thenReturn(true);
+        when(mockMessage.getFrom()).thenReturn(user);
+        when(mockMessage.getText()).thenReturn("/view");
+        when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockMessage.hasEntities()).thenReturn(true);
+        when(mockEntity.getType()).thenReturn("bot_command");
+        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
+        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
+        return mockUpdate;
+    }
 }

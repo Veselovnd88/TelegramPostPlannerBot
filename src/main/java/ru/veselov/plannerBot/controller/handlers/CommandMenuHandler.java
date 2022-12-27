@@ -71,20 +71,20 @@ public class CommandMenuHandler implements UpdateHandler {
                     }
                     userDataCache.createPostCreator(update.getMessage().getFrom());
                     userDataCache.setUserBotState(userId,BotState.AWAITING_POST);
-                    return utils.removeKeyBoard(new SendMessage(update.getMessage().getChatId().toString(),
-                            AWAIT_CONTENT_MESSAGE));}
+                    return new SendMessage(update.getMessage().getChatId().toString(),
+                            AWAIT_CONTENT_MESSAGE);}
                 else{
-                   return utils.removeKeyBoard(SendMessage.builder().chatId(userId)
-                            .text(ANOTHER_ACTION_IN_PROCESS).build());
+                   return SendMessage.builder().chatId(userId)
+                            .text(ANOTHER_ACTION_IN_PROCESS).build();
                 }
             case "/view":
-                //FIXME добавить проверку что бот в статусе Готов к работе
-                if(userDataCache.getUsersBotState(userId)!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
-                    reset(update);
-                userDataCache.setUserBotState(userId,BotState.VIEW);
-                return viewModeMessage(update);}
+                if(userDataCache.getUsersBotState(userId)==BotState.READY_TO_WORK){
+                    userDataCache.setUserBotState(userId,BotState.VIEW);
+                    return viewModeMessage(update);
+                }
                 else{
-                    return SendMessage.builder().chatId(userId).text(BOT_WAS_NOT_ADDED_TO_CHANEL).build();
+                    return SendMessage.builder().chatId(userId)
+                            .text(ANOTHER_ACTION_IN_PROCESS).build();
                 }
 
             case "/reset":
@@ -96,7 +96,8 @@ public class CommandMenuHandler implements UpdateHandler {
                         HELP_MESSAGE));
 
             case "/promote":
-                //FIXME проверить что бот в статусе готов к работе
+                 reset(update);
+                 //FIXME понять в какой статус возвращать бота после отработки команды Promote
                  userDataCache.setUserBotState(userId,BotState.PROMOTE_USER);
                  return utils.removeKeyBoard(
                          SendMessage.builder().chatId(String.valueOf(update.getMessage().getChatId()))
@@ -120,10 +121,9 @@ public class CommandMenuHandler implements UpdateHandler {
 
         }
 
-    /*Удаляет посты, которые в процессе добавления*/
     private SendMessage reset(Update update){
         Long userId = update.getMessage().getFrom().getId();
-        userDataCache.removePostCreator(userId);
+        userDataCache.removePostCreator(userId);//FIXME удалить другие кеши
         BotState botState = userDataCache.getUsersBotState(userId);
         if(botState!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
             userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
@@ -147,8 +147,6 @@ public class CommandMenuHandler implements UpdateHandler {
             sb.append(format);
             sb.append("\n");
         }
-        SendMessage message = new SendMessage();
-        message.enableMarkdown(true);
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton manageButton = new InlineKeyboardButton();
         manageButton.setCallbackData("manage");
@@ -158,9 +156,7 @@ public class CommandMenuHandler implements UpdateHandler {
         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
         rowList.add(row1);
         inlineKeyboardMarkup.setKeyboard(rowList);
-        message.setReplyMarkup(inlineKeyboardMarkup);
-        message.setChatId(update.getMessage().getChatId().toString());
-        message.setText(sb.toString());
-        return message;
+        return SendMessage.builder().replyMarkup(inlineKeyboardMarkup).chatId(update.getMessage().getChatId())
+                        .text(sb.toString()).build();
     }
 }

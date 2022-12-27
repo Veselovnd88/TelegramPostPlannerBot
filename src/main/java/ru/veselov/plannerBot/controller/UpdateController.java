@@ -57,7 +57,7 @@ public class UpdateController implements UpdateHandler {
                 if((update.getMyChatMember().getNewChatMember().getUser().getId())//бота присоединили к каналу
                         .equals(bot.getMe().getId())){
                     User user = update.getMyChatMember().getFrom();
-                    Long userId = user.getId();
+                    Long userId = user.getId();//FIXME продумать этот момент, т.к. этот апдейт переводит бота в другой статус незапланировано
                     Chat chat = update.getMyChatMember().getChat();
                     if(update.getMyChatMember().getNewChatMember().getStatus()
                             .equalsIgnoreCase("administrator")){
