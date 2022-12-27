@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import ru.veselov.plannerBot.cache.AdminActionsDataCache;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.controller.BotState;
 import ru.veselov.plannerBot.model.Post;
@@ -29,11 +30,14 @@ import static ru.veselov.plannerBot.utils.MessageUtils.*;
 public class CommandMenuHandler implements UpdateHandler {
     private final Utils utils;
     private final DataCache userDataCache;
+    private final AdminActionsDataCache adminActionsDataCache;
+
     private final PostService postService;
     @Autowired
-    public CommandMenuHandler(Utils utils, DataCache userDataCache, PostService postService, UserService userService) {
+    public CommandMenuHandler(Utils utils, DataCache userDataCache, AdminActionsDataCache adminActionsDataCache, PostService postService, UserService userService) {
         this.utils = utils;
         this.userDataCache = userDataCache;
+        this.adminActionsDataCache = adminActionsDataCache;
         this.postService = postService;
         this.userService = userService;
     }
@@ -97,12 +101,10 @@ public class CommandMenuHandler implements UpdateHandler {
 
             case "/promote":
                  reset(update);
-                 //FIXME понять в какой статус возвращать бота после отработки команды Promote
+                 adminActionsDataCache.setStartBotState(userId,userDataCache.getUsersBotState(userId));
                  userDataCache.setUserBotState(userId,BotState.PROMOTE_USER);
-                 return utils.removeKeyBoard(
-                         SendMessage.builder().chatId(String.valueOf(update.getMessage().getChatId()))
-                                 .text(FORWARD_MESSAGE).build()
-                 );
+                 return SendMessage.builder().chatId(update.getMessage().getChatId())
+                                 .text(FORWARD_MESSAGE).build();
         }
         return utils.removeKeyBoard(SendMessage.builder().chatId(userId).text(UNKNOWN_COMMAND).build());
     }

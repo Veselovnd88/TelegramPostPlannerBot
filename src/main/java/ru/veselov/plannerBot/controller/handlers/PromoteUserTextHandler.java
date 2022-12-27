@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import ru.veselov.plannerBot.cache.AdminActionsDataCache;
 import ru.veselov.plannerBot.cache.DataCache;
 
 import java.util.ArrayList;
@@ -16,16 +17,16 @@ import java.util.List;
 @Component
 @Slf4j
 public class PromoteUserTextHandler  implements  UpdateHandler{
-
-    private final DataCache userDataCache;
+    private final AdminActionsDataCache adminActionsDataCache;
     @Autowired
-    public PromoteUserTextHandler(DataCache userDataCache) {
-        this.userDataCache = userDataCache;
+    public PromoteUserTextHandler(AdminActionsDataCache adminActionsDataCache) {
+        this.adminActionsDataCache = adminActionsDataCache;
     }
 
     @Override
     public BotApiMethod<?> processUpdate(Update update) {
-        userDataCache.setPromoteUser(update.getMessage().getForwardFrom());
+        adminActionsDataCache.setPromoteUser(update.getMessage().getFrom().getId(),
+                update.getMessage().getForwardFrom());
         return promoteMessage(update.getMessage().getFrom().getId());
     }
 

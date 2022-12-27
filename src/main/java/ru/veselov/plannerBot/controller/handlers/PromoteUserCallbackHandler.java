@@ -6,9 +6,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
+import ru.veselov.plannerBot.cache.AdminActionsDataCache;
 import ru.veselov.plannerBot.cache.DataCache;
-import ru.veselov.plannerBot.controller.BotState;
 import ru.veselov.plannerBot.model.UserEntity;
 import ru.veselov.plannerBot.model.UserStatus;
 import ru.veselov.plannerBot.service.UserService;
@@ -21,16 +20,20 @@ public class PromoteUserCallbackHandler implements UpdateHandler{
 
     private final UserService userService;
     private final DataCache userDataCache;
+    private final AdminActionsDataCache adminActionsDataCache;
     @Autowired
-    public PromoteUserCallbackHandler(UserService userService, DataCache userDataCache) {
+    public PromoteUserCallbackHandler(UserService userService, DataCache userDataCache, AdminActionsDataCache adminActionsDataCache) {
         this.userService = userService;
         this.userDataCache = userDataCache;
+        this.adminActionsDataCache = adminActionsDataCache;
     }
     /*Изменение статуса пользователя*/
     @Override
     public BotApiMethod<?> processUpdate(Update update) {
         String data = update.getCallbackQuery().getData();
-        Optional<UserEntity> userById = userService.findUserById(userDataCache.getPromoteUser());
+        Optional<UserEntity> userById = userService.findUserById(
+                adminActionsDataCache.getPromoteUser(update.getCallbackQuery().getFrom().getId())
+        );
         if(userById.isPresent()){
             UserEntity userEntity = userById.get();
             switch (data){
@@ -46,11 +49,13 @@ public class PromoteUserCallbackHandler implements UpdateHandler{
             }
             userService.saveUser(userEntity);
             log.info("Изменен статус пользователя {}", userEntity.getUserId());
-            userDataCache.setUserBotState(update.getCallbackQuery().getFrom().getId(), BotState.READY_TO_WORK);
+            userDataCache.setUserBotState(update.getCallbackQuery().getFrom().getId(),
+                    adminActionsDataCache.getStartBotState(update.getCallbackQuery().getFrom().getId()));
             return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
                     .text("Статус успешно обновлен на "+ userEntity.getStatus()).build();
         }
-        userDataCache.setUserBotState(update.getCallbackQuery().getFrom().getId(), BotState.READY_TO_WORK);
+        userDataCache.setUserBotState(update.getCallbackQuery().getFrom().getId(),
+                adminActionsDataCache.getStartBotState(update.getCallbackQuery().getFrom().getId()));
         return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
                 .text("Такого пользователя нет в базе").build();
     }

@@ -7,39 +7,34 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;
-import ru.veselov.plannerBot.bots.MyPreciousBot;
+import ru.veselov.plannerBot.cache.AdminActionsDataCache;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.model.PostState;
+import ru.veselov.plannerBot.model.UserEntity;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.service.UserService;
-import ru.veselov.plannerBot.utils.BotProperties;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Disabled
 public class StatusChangingTest {
 
-    @MockBean
-    MyPreciousBot bot;
     @Autowired
     DataCache userDataCache;
+    @Autowired
+    AdminActionsDataCache adminActionsDataCache;
     @MockBean
     UserService userService;
-    @Autowired
-    private BotProperties botProperties;
-    @MockBean
-    TelegramBotsApi telegramBotsApi;
     @MockBean
     PostService postService;
     @Autowired
@@ -296,7 +291,7 @@ public class StatusChangingTest {
     }
     @Test
     void viewTestWrongStatus(){
-        //Проверка на то, что метод метод отрабатывает только из состояния READY TO WORK
+        //Проверка на то, что метод отрабатывает только из состояния READY TO WORK
         for(BotState s: BotState.values()){
             if(s!=BotState.READY_TO_WORK){
                 userDataCache.setUserBotState(user.getId(),s);
@@ -305,15 +300,33 @@ public class StatusChangingTest {
             }
         }
     }
+    @Test
+    void promoteTest(){
+        //Проверка, что при нажатии команды состояние меняется из любого состояния
+        for(BotState s: BotState.values()){
+                userDataCache.setUserBotState(user.getId(),s);
+                updateController.processUpdate(actions.adminPressPromote(user));
+                assertEquals(BotState.PROMOTE_USER,userDataCache.getUsersBotState(user.getId()));
+            }
+    }
+    @Test
+    void adminPromoteUserTest(){
+        //Проверка на то, что состояние меняется на первоначальное после действий
+        userDataCache.setUserBotState(user.getId(),BotState.PROMOTE_USER);
+        adminActionsDataCache.setStartBotState(user.getId(),BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
+        adminActionsDataCache.setPromoteUser(user.getId(),new User());
+        when(userService.findUserById(user)).thenReturn(Optional.of(new UserEntity()));
+        updateController.processUpdate(actions.adminPromoteUser(user));
+        assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
+        //////проверка другого состояния из которого может вызвать
+        userDataCache.setUserBotState(user.getId(),BotState.PROMOTE_USER);
+        adminActionsDataCache.setStartBotState(user.getId(),BotState.READY_TO_WORK);
+        adminActionsDataCache.setPromoteUser(user.getId(),new User());
+        when(userService.findUserById(user)).thenReturn(Optional.of(new UserEntity()));
+        updateController.processUpdate(actions.adminPromoteUser(user));
+        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
+    }
 
-
-
-
-
-
-
-
-    //TODO проверка promote из любого статуса
     //TODO проверка MANAGE
 
 

@@ -152,4 +152,31 @@ public class UserActions {
         when(mockUpdate.hasCallbackQuery()).thenReturn(false);
         return mockUpdate;
     }
+
+    public Update adminPressPromote(User user){
+        /*Пользователь жмет /promote */
+        when(mockUpdate.hasMessage()).thenReturn(true);
+        when(mockMessage.hasText()).thenReturn(true);
+        when(mockMessage.getFrom()).thenReturn(user);
+        when(mockMessage.getText()).thenReturn("/promote");
+        when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockMessage.hasEntities()).thenReturn(true);
+        when(mockEntity.getType()).thenReturn("bot_command");
+        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
+        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
+        return mockUpdate;
+    }
+
+    public Update adminPromoteUser(User user){
+        /*Пользователь нажимет ввести дату снова*/
+        when(mockUpdate.hasCallbackQuery()).thenReturn(true);
+        when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
+        when(mockCallBack.getData()).thenReturn("premium");
+        when(mockCallBack.getId()).thenReturn("1");
+        when(mockCallBack.getMessage()).thenReturn(mockMessage);
+        when(mockMessage.getChatId()).thenReturn(user.getId());
+        when(mockCallBack.getFrom()).thenReturn(user);
+        return mockUpdate;
+    }
+
 }

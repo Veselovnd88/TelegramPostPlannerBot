@@ -1,7 +1,8 @@
-package ru.veselov.plannerBot.cache;
+package ru.veselov.plannerBot.cache.impl;
 
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.User;
+import ru.veselov.plannerBot.cache.AdminActionsDataCache;
 import ru.veselov.plannerBot.controller.BotState;
 
 import java.util.HashMap;
@@ -10,7 +11,7 @@ import java.util.Map;
 @Component
 public class AdminActionsDataCacheImpl implements AdminActionsDataCache {
     private final Map<Long,BotState> startBotState = new HashMap<>();
-    private User user;
+    private final Map<Long,User> promoteUser = new HashMap<>();
 
     @Override
     public void setStartBotState(Long userId, BotState botState) {
@@ -19,16 +20,16 @@ public class AdminActionsDataCacheImpl implements AdminActionsDataCache {
 
     @Override
     public BotState getStartBotState(Long userId) {
-        startBotState.get(userId);
+        return startBotState.get(userId);
     }
 
     @Override
-    public User getPromoteUser() {
-        return user;
+    public User getPromoteUser(Long userId) {
+        return promoteUser.get(userId);
     }
 
     @Override
-    public void setPromoteUser(User user) {
-        this.user=user;
+    public void setPromoteUser(Long userId, User user) {
+        promoteUser.put(userId,user);
     }
 }
