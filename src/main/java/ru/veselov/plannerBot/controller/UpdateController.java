@@ -74,8 +74,6 @@ public class UpdateController implements UpdateHandler {
                     ||
                             update.getMyChatMember().getNewChatMember().getStatus()
                                     .equalsIgnoreCase("kicked")){
-                        /*Если сразу удалять бота - MyChatMember - отдает id пользователя,
-                        * если через некоторое время, id возвращается id бота*/
                         Map<Long,Integer> ids = userService.findUsersWithChat(chat.getId().toString());
                         for(var pair : ids.entrySet() ){
                             if(pair.getValue()==1){

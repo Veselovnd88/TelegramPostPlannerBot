@@ -8,7 +8,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 
-public interface DataCache {
+public interface DataCache {//FIXME разбить на разные кеши
     void setUserBotState(Long userId,BotState botState);
     BotState getUsersBotState(Long userId);
     PostCreator createPostCreator(User user);
