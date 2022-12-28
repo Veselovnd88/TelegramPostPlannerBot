@@ -1,18 +1,12 @@
 package ru.veselov.plannerBot.controller.handlers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.telegram.telegrambots.bots.DefaultAbsSender;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
-import org.telegram.telegrambots.meta.bots.AbsSender;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.DataCache;
@@ -22,7 +16,7 @@ import ru.veselov.plannerBot.service.UserService;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -59,7 +53,6 @@ class BotChatMemberActionsHandlerTest {
         when(bot.getMyId()).thenReturn(1L);
         when(mockChat.getTitle()).thenReturn("111");
         when(mockChat.getId()).thenReturn(-100L);
-
     }
     @Test
     void addBotAsAdminStatusChangingTest(){
@@ -69,19 +62,7 @@ class BotChatMemberActionsHandlerTest {
         botChatMemberActionsHandler.processUpdate(mockUpdate);
         assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(mockUser.getId()));
     }
-    @Test
-    void removeBotFromAdminStatusChangingTest(){
-        //Бота удалили из единственного канала (у пользователя больше нет каналов)
-        when(userService.findUsersWithChat(mockChat.getId().toString())).thenReturn(Map.of(1L,1));
-        for(String status: List.of("left","kicked")){
-        when(chatMember.getStatus()).thenReturn(status);
-        for(BotState s: BotState.values()){
-            userDataCache.setUserBotState(mockUser.getId(), s);
-            botChatMemberActionsHandler.processUpdate(mockUpdate);
-            assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(mockUser.getId()));
-        }
-        }
-    }
+
     @Test
     void removeBotFromAdminOneChatStatusChangingTest(){
         //Бота удалили из единственного канала (у пользователя больше нет каналов)

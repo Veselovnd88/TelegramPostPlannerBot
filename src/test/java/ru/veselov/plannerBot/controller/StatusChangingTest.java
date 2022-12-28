@@ -10,6 +10,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.veselov.plannerBot.bots.BotState;
+import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.AdminActionsDataCache;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.model.PostState;
@@ -21,11 +22,14 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Disabled
 public class StatusChangingTest {
+    @MockBean
+    MyPreciousBot bot;
 
     @Autowired
     DataCache userDataCache;
@@ -38,6 +42,7 @@ public class StatusChangingTest {
     @Autowired
     UpdateController updateController;
     UserActions actions = new UserActions();
+    public Chat mockChat = spy(Chat.class);
     User user = new User();
     List mockList;
     @BeforeEach
@@ -49,6 +54,7 @@ public class StatusChangingTest {
         mockList = Mockito.mock(ArrayList.class);
         /*Если бота убрали из канала, то бот уходит в статус ожидания канала*/
         userDataCache.setUserBotState(user.getId(), BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
+        when(bot.getMyId()).thenReturn(1L);
         //
         }
 
@@ -284,10 +290,11 @@ public class StatusChangingTest {
     void helpTest(){
         //Проверка нажатия /help, т.к. внутри срабатывает reset - поведение аналогичное reset
         userDataCache.setUserBotState(user.getId(),BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
+
         updateController.processUpdate(actions.userPressHelp(user));
         assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
         for(BotState s: BotState.values()){
-            if(s!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
+            if(s!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL&&s!=BotState.PROMOTE_USER){
                 userDataCache.setUserBotState(user.getId(),s);
                 updateController.processUpdate(actions.userReset(user));
                 assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
@@ -359,8 +366,47 @@ public class StatusChangingTest {
     }
     @Test
     void manageToReadyToWorkTest(){
+        //Проверка перехода статуса при выборе команды с постом
         userDataCache.setUserBotState(user.getId(),BotState.MANAGE);
         updateController.processUpdate(actions.userManagePost(user));
         assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
+    }
+
+    @Test
+    void addBotToChannel(){
+        //Проверка на смену состояний когда бота добавляют в канал
+        for(BotState s: BotState.values()){
+            userDataCache.setUserBotState(user.getId(),s);
+            updateController.processUpdate(actions.botAndChannelAction("administrator",user,bot.getMyId()));
+            assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
+        }
+    }
+
+    @Test
+    void removeBotFromOneChannel(){
+        //Проверка на смену состояний, когда бота удаляют из единственного канала
+        when(mockChat.getId()).thenReturn(-100L);
+        when(userService.findUsersWithChat(mockChat.getId().toString())).thenReturn(Map.of(user.getId(),1));
+        for(String status: List.of("left","kicked")){
+            for(BotState s: BotState.values()){
+                userDataCache.setUserBotState(user.getId(), s);
+                updateController.processUpdate(actions.botAndChannelAction(status,user,bot.getMyId()));
+                assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
+    }
+
+    @Test
+    void removeBotFromTwoChannel2(){
+        //Проверка на смену состояний, когда бота удаляют из не единственного канала
+        when(mockChat.getId()).thenReturn(-100L);
+        when(userService.findUsersWithChat(mockChat.getId().toString())).thenReturn(Map.of(user.getId(),2));
+        for(String status: List.of("left","kicked")){
+            for(BotState s: BotState.values()){
+                userDataCache.setUserBotState(user.getId(), s);
+                updateController.processUpdate(actions.botAndChannelAction(status,user,bot.getMyId()));
+                assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
+            }
+        }
     }
 }
