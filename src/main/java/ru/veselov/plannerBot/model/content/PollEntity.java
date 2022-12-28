@@ -42,7 +42,7 @@ public class PollEntity {
     @Column(name = "explanation")
     private String explanation;
     @Column(name = "correct_id")
-    private int correctOptionId;
+    private Integer correctOptionId;
     @ManyToOne
     @JoinColumn(name="post_id",referencedColumnName = "post_id")
     private PostEntity post;

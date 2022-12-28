@@ -292,7 +292,7 @@ public class PostService {
                         return me;
                     }
             ).collect(Collectors.toList()));
-            poll.setCorrectOptionId(e.getCorrectOptionId());
+            poll.setCorrectOptionId(e.getCorrectOptionId()==null?0:e.getCorrectOptionId());
         }
         return poll;
     }

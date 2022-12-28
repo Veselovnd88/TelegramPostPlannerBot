@@ -8,7 +8,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.veselov.plannerBot.cache.DataCache;
-import ru.veselov.plannerBot.controller.BotState;
+import ru.veselov.plannerBot.bots.BotState;
+import ru.veselov.plannerBot.controller.UpdateHandler;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.service.postsender.PostSender;
@@ -21,7 +22,7 @@ import java.util.Set;
 
 @Component
 @Slf4j
-public class ManagePostCallbackQueryHandler implements UpdateHandler{
+public class ManagePostCallbackQueryHandler implements UpdateHandler {
     private final PostService postService;
     private final DataCache userDataCache;
     private final PostSender postSender;
@@ -63,7 +64,7 @@ public class ManagePostCallbackQueryHandler implements UpdateHandler{
             }
             else{
                 userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                return new SendMessage(userId.toString(),"Пост не найден");
+                return utils.removeKeyBoard(new SendMessage(userId.toString(),"Пост не найден"));
             }
         }
         //отправить прямо сейчас

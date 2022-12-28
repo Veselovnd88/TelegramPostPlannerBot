@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.User;
-import ru.veselov.plannerBot.controller.BotState;
+import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.service.PostCreator;

@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import ru.veselov.plannerBot.cache.DataCache;
+import ru.veselov.plannerBot.controller.UpdateHandler;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.utils.MessageUtils;
 
@@ -17,7 +18,7 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class ManagePostTextHandler implements UpdateHandler{
+public class ManagePostTextHandler implements UpdateHandler {
     private final PostService postService;
     private final DataCache userDataCache;
     @Autowired

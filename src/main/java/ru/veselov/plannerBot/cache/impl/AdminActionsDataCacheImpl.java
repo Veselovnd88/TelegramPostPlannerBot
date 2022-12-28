@@ -3,7 +3,7 @@ package ru.veselov.plannerBot.cache.impl;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.veselov.plannerBot.cache.AdminActionsDataCache;
-import ru.veselov.plannerBot.controller.BotState;
+import ru.veselov.plannerBot.bots.BotState;
 
 import java.util.HashMap;
 import java.util.Map;

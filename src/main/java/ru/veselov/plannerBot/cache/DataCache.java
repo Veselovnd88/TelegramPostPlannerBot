@@ -1,7 +1,7 @@
 package ru.veselov.plannerBot.cache;
 
 import org.telegram.telegrambots.meta.api.objects.User;
-import ru.veselov.plannerBot.controller.BotState;
+import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.service.PostCreator;
 
 import java.util.Calendar;

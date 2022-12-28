@@ -1,4 +1,4 @@
-package ru.veselov.plannerBot.handlers;
+package ru.veselov.plannerBot.controller.handlers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
@@ -12,8 +12,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.*;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.UserDataCache;
-import ru.veselov.plannerBot.controller.BotState;
-import ru.veselov.plannerBot.controller.handlers.CreatePostHandler;
+import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.utils.MessageUtils;
 

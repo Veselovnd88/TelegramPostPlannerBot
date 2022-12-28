@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.veselov.plannerBot.cache.DataCache;
-import ru.veselov.plannerBot.controller.BotState;
+import ru.veselov.plannerBot.bots.BotState;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

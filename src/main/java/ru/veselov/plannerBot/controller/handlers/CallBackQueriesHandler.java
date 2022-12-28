@@ -13,7 +13,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.veselov.plannerBot.cache.DataCache;
-import ru.veselov.plannerBot.controller.BotState;
+import ru.veselov.plannerBot.bots.BotState;
+import ru.veselov.plannerBot.controller.UpdateHandler;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.service.PostService;
@@ -26,7 +27,7 @@ import java.util.Set;
 
 @Component
 @Slf4j
-public class CallBackQueriesHandler implements UpdateHandler{
+public class CallBackQueriesHandler implements UpdateHandler {
 
     private final DataCache userDataCache;
     private final UserService userService;

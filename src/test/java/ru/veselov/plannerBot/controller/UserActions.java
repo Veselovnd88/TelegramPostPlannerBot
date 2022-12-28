@@ -90,24 +90,14 @@ public class UserActions {
 
     public Update userSavedDate(User user){
         /*Пользователь жмет сохранить после ввода даты*/
-        when(mockUpdate.hasCallbackQuery()).thenReturn(true);
-        when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
-        when(mockCallBack.getData()).thenReturn("saveYes");
-        when(mockCallBack.getId()).thenReturn("1");
-        when(mockCallBack.getFrom()).thenReturn(user);
-        return mockUpdate;
+        return callBackImitation("saveYes",user);
     }
 
     public Update userInputDateAgain(User user){
-        /*Пользователь нажимет ввести дату снова*/
-        when(mockUpdate.hasCallbackQuery()).thenReturn(true);
-        when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
-        when(mockCallBack.getData()).thenReturn("inputDate");
-        when(mockCallBack.getId()).thenReturn("1");
+        /*Пользователь нажимает ввести дату снова*/
         when(mockCallBack.getMessage()).thenReturn(mockMessage);
         when(mockMessage.getChatId()).thenReturn(user.getId());
-        when(mockCallBack.getFrom()).thenReturn(user);
-        return mockUpdate;
+        return callBackImitation("inputDate",user);
     }
 
     public Update userReset(User user){
@@ -168,13 +158,28 @@ public class UserActions {
     }
 
     public Update adminPromoteUser(User user){
-        /*Пользователь нажимет ввести дату снова*/
-        when(mockUpdate.hasCallbackQuery()).thenReturn(true);
-        when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
-        when(mockCallBack.getData()).thenReturn("premium");
-        when(mockCallBack.getId()).thenReturn("1");
+        /*Админ выбирает новый статус пользователя*/
         when(mockCallBack.getMessage()).thenReturn(mockMessage);
         when(mockMessage.getChatId()).thenReturn(user.getId());
+        return callBackImitation("premium",user);
+    }
+
+    public Update userPressManageCallback(User user){
+        /*Пользователь жмет кнопку управления постами*/
+        callBackImitation("manage",user);
+        return mockUpdate;
+    }
+
+    public Update userManagePost(User user){
+        /*Пользователь жмет команду управления постами*/
+        return callBackImitation("delete",user);
+    }
+
+    private Update callBackImitation(String callbackData, User user){
+        when(mockUpdate.hasCallbackQuery()).thenReturn(true);
+        when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
+        when(mockCallBack.getData()).thenReturn(callbackData);
+        when(mockCallBack.getId()).thenReturn("1");
         when(mockCallBack.getFrom()).thenReturn(user);
         return mockUpdate;
     }

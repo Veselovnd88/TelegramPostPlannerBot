@@ -9,14 +9,14 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import ru.veselov.plannerBot.cache.AdminActionsDataCache;
-import ru.veselov.plannerBot.cache.DataCache;
+import ru.veselov.plannerBot.controller.UpdateHandler;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
 @Slf4j
-public class PromoteUserTextHandler  implements  UpdateHandler{
+public class PromoteUserTextHandler  implements UpdateHandler {
     private final AdminActionsDataCache adminActionsDataCache;
     @Autowired
     public PromoteUserTextHandler(AdminActionsDataCache adminActionsDataCache) {

@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.veselov.plannerBot.cache.AdminActionsDataCache;
 import ru.veselov.plannerBot.cache.DataCache;
+import ru.veselov.plannerBot.controller.UpdateHandler;
 import ru.veselov.plannerBot.model.UserEntity;
 import ru.veselov.plannerBot.model.UserStatus;
 import ru.veselov.plannerBot.service.UserService;
@@ -16,7 +17,7 @@ import java.util.Optional;
 
 @Component
 @Slf4j
-public class PromoteUserCallbackHandler implements UpdateHandler{
+public class PromoteUserCallbackHandler implements UpdateHandler {
 
     private final UserService userService;
     private final DataCache userDataCache;

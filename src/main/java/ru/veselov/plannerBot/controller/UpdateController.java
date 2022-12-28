@@ -5,18 +5,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.controller.handlers.*;
 import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.utils.MessageUtils;
+import ru.veselov.plannerBot.utils.Utils;
 
-import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -30,15 +28,17 @@ public class UpdateController implements UpdateHandler {
     private final CommandMenuHandler commandMenuHandler;
     private final ManagePostTextHandler managePostTextHandler;
     private final PromoteUserTextHandler promoteUserTextHandler;
+    private final BotChatMemberActionsHandler botChatMemberActionsHandler;
     private final DataCache userDataCache;
 
     private final UserService userService;
+    private final Utils utils;
 
 
     @Autowired
     public UpdateController(CreatePostHandler createPostHandler, MyPreciousBot myPreciousBot,
                             ChooseDateHandler chooseDateHandler, CallBackQueriesHandler callBackQueriesHandler, CommandMenuHandler commandMenuHandler,
-                            ManagePostTextHandler managePostTextHandler, PromoteUserTextHandler promoteUserTextHandler, DataCache userDataCache, UserService userService) {
+                            ManagePostTextHandler managePostTextHandler, PromoteUserTextHandler promoteUserTextHandler, BotChatMemberActionsHandler botChatMemberActionsHandler, DataCache userDataCache, UserService userService, Utils utils) {
         this.createPostHandler = createPostHandler;
         this.chooseDateHandler = chooseDateHandler;
         this.callBackQueriesHandler = callBackQueriesHandler;
@@ -46,63 +46,22 @@ public class UpdateController implements UpdateHandler {
         this.bot = myPreciousBot;
         this.managePostTextHandler = managePostTextHandler;
         this.promoteUserTextHandler = promoteUserTextHandler;
+        this.botChatMemberActionsHandler = botChatMemberActionsHandler;
         this.userDataCache = userDataCache;
         this.userService = userService;
+        this.utils = utils;
     }
 
     public BotApiMethod<?> processUpdate(Update update){
        //Проверка присоединения к каналу
         if(update.hasMyChatMember()){
-            try {
-                if((update.getMyChatMember().getNewChatMember().getUser().getId())//бота присоединили к каналу
-                        .equals(bot.getMe().getId())){
-                    User user = update.getMyChatMember().getFrom();
-                    Long userId = user.getId();//FIXME продумать этот момент, т.к. этот апдейт переводит бота в другой статус незапланировано
-                    Chat chat = update.getMyChatMember().getChat();
-                    if(update.getMyChatMember().getNewChatMember().getStatus()
-                            .equalsIgnoreCase("administrator")){
-                        //Сохраняем в БД пользователя с назначенным чатом
-                        userService.save(chat,user);
-                        userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
-                        log.info("Бот добавлен в канал {} пользователя {}", chat.getTitle(), userId);
-                        return SendMessage.builder().chatId(userId).text("Вы присоединили меня к каналу "+chat.getTitle()).build();
-                    }
-                    //Если статус был left - то удаляем чат из списка, проверяем если список пустой,
-                    //изменяем состояние бота
-                    if(update.getMyChatMember().getNewChatMember().getStatus()
-                            .equalsIgnoreCase("left")
-                    ||
-                            update.getMyChatMember().getNewChatMember().getStatus()
-                                    .equalsIgnoreCase("kicked")){
-                        Map<Long,Integer> ids = userService.findUsersWithChat(chat.getId().toString());
-                        for(var pair : ids.entrySet() ){
-                            if(pair.getValue()==1){
-                                userDataCache.setUserBotState(pair.getKey(), BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
-                                log.info("Статус переключен на Ожидание канала для {}",
-                                    pair.getKey());
-                            }
-                            if(update.getMyChatMember().getNewChatMember().getStatus().equalsIgnoreCase("left")){
-                                userService.removeChat(chat.getId().toString());
-                                return SendMessage.builder().chatId(pair.getKey()).text("Я больше не админ канала "+chat.getTitle()).build();
-                            }
-                            if(update.getMyChatMember().getNewChatMember().getStatus().equalsIgnoreCase("kicked")){
-                                userService.removeChat(chat.getId().toString());
-                                return SendMessage.builder().chatId(pair.getKey()).text(
-                                        "Я кикнут с канала "+chat.getTitle()+"чтобы продолжить работу удалите меня из администраторов, и присоедините снова").build();
-                            }
-                        }
-                    }
-                    return null ;
-                }
-            } catch (TelegramApiException e) {
-                log.error("Ошибка при присоединении бота к каналу: {}", e.getMessage());
-            }
+           return botChatMemberActionsHandler.processUpdate(update);
         }
 
         /*Блок в который попадают апдейты, которые не содержат команды при включенных флагах ожидания поста и даты*/
         if(update.hasMessage()){
             Long userId = update.getMessage().getFrom().getId();
-            if(userDataCache.getUsersBotState(userId)==BotState.AWAITING_POST){
+            if(userDataCache.getUsersBotState(userId)== BotState.AWAITING_POST){
                     if((update.getMessage().hasText()||update.getMessage().hasPhoto()
                     || update.getMessage().hasAudio()
                     ||update.getMessage().hasVideo()
@@ -154,7 +113,7 @@ public class UpdateController implements UpdateHandler {
            if(botState!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
               return callBackQueriesHandler.processUpdate(update);}
         }
-        return null;
+        return null;//TODO неизвестная команда
     }
 
     private boolean isCommand(Update update) {

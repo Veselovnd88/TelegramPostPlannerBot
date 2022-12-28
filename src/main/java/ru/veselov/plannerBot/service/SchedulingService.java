@@ -6,7 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.cache.UserDataCache;
-import ru.veselov.plannerBot.controller.BotState;
+import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
 

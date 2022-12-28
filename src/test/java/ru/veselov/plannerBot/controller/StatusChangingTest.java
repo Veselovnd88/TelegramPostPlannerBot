@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;
+import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.cache.AdminActionsDataCache;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.model.PostState;
@@ -16,10 +17,7 @@ import ru.veselov.plannerBot.model.UserEntity;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.service.UserService;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -50,19 +48,19 @@ public class StatusChangingTest {
         user.setLastName("Evil");
         mockList = Mockito.mock(ArrayList.class);
         /*Если бота убрали из канала, то бот уходит в статус ожидания канала*/
-        userDataCache.setUserBotState(user.getId(),BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
+        userDataCache.setUserBotState(user.getId(), BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
         //
         }
 
     @Test
-    void userFirstContact(){
+    void userFirstContactTest(){
         /*Первый контакт пользователя с ботом, переводит бота в состояние ожидания канала,
         * то же самое если бот находится в состоянии ожидания канала*/
         updateController.processUpdate(actions.userPressStart(user));
         assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
     }
     @Test
-    void userAlreadyHadChats(){
+    void userAlreadyHadChatsTest(){
         /*У пользователя уже есть каналы, сохраненный в БД, но нет кеша, после перезапуска бота
         * пользователь жмет старт*/
         Chat chat = new Chat();
@@ -74,7 +72,7 @@ public class StatusChangingTest {
     }
 
     @Test
-    void pressStartFromAnotherStates(){
+    void pressStartFromAnotherStatesTest(){
         /*При нажатии старт бот переводится в состояние READY_TO_WORK, кроме случая когда бот не добавлен в канал */
         Chat chat = new Chat();
         chat.setId(2L);
@@ -87,13 +85,27 @@ public class StatusChangingTest {
         }
     }
     @Test
-    void pressCreatePostNoChannels(){
+    void pressStartFromPromoteUserNoChannels(){
+        adminActionsDataCache.setStartBotState(user.getId(),BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
+        userDataCache.setUserBotState(user.getId(),BotState.PROMOTE_USER);
+        updateController.processUpdate(actions.userPressStart(user));
+        assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
+    }
+    @Test
+    void pressStartFromPromoteUserWithChannels(){
+        adminActionsDataCache.setStartBotState(user.getId(),BotState.READY_TO_WORK);
+        userDataCache.setUserBotState(user.getId(),BotState.PROMOTE_USER);
+        updateController.processUpdate(actions.userPressStart(user));
+        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
+    }
+    @Test
+    void pressCreatePostNoChannelsTest(){
         /*Нажатие кнопки при отсутствии подключенных каналов*/
         updateController.processUpdate(actions.userCreatePost(user));
         assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
     }
     @Test
-    void createPostWhenAnotherState(){
+    void createPostWhenAnotherStateTest(){
         /*Нажатие кнопки, когда статус бота НЕ READY TO WORK*/
         for (BotState s : BotState.values()){
             if(s!=BotState.READY_TO_WORK){
@@ -105,7 +117,7 @@ public class StatusChangingTest {
     }
 
     @Test
-    void pressCreatePostWhenUserHasChannelsLimitIsOk(){
+    void pressCreatePostWhenUserHasChannelsLimitIsOkTest(){
         /*Нажатие кнопки при подключенных каналах*/
         userDataCache.setUserBotState(user.getId(),BotState.READY_TO_WORK);
         //Проверка на лимит постов//
@@ -117,7 +129,7 @@ public class StatusChangingTest {
     }
 
     @Test
-    void pressCreatePostWhenUserHasChannelUnlimited(){
+    void pressCreatePostWhenUserHasChannelUnlimitedTest(){
         //Безлимитные посты
         userDataCache.setUserBotState(user.getId(),BotState.READY_TO_WORK);
         when(mockList.size()).thenReturn(5);
@@ -128,7 +140,7 @@ public class StatusChangingTest {
     }
 
     @Test
-    void pressCreatePostWhenUserHasChannelUnderLimit(){
+    void pressCreatePostWhenUserHasChannelUnderLimitTest(){
         //Лимит превышения
         userDataCache.setUserBotState(user.getId(),BotState.READY_TO_WORK);
         when(mockList.size()).thenReturn(5);
@@ -138,7 +150,7 @@ public class StatusChangingTest {
         assertEquals(BotState.READY_TO_WORK, userDataCache.getUsersBotState(user.getId()));
     }
     @Test
-    void userSentContentText(){
+    void userSentContentTextTest(){
         //Проверка на то, что апдейт попадает в этот метод, только при статусе ожидания поста
         userDataCache.setUserBotState(user.getId(),BotState.AWAITING_POST);
         userDataCache.createPostCreator(user);
@@ -147,7 +159,7 @@ public class StatusChangingTest {
     }
 
     @Test
-    void userSentContentTextAnotherBotStates(){
+    void userSentContentTextAnotherBotStatesTest(){
         //Проверка на то, что в из других состояний метод не изменит статус бота
         for (BotState s : BotState.values()){
             if(s!=BotState.AWAITING_POST){
@@ -159,7 +171,7 @@ public class StatusChangingTest {
         }
     }
     @Test
-    void userPressSavePostButton(){
+    void userPressSavePostButtonTest(){
         //Проверка изменения статуса при нажатии кнопки сохранить пост в канал
         userDataCache.setUserBotState(user.getId(),BotState.AWAITING_POST);
         userDataCache.createPostCreator(user);
@@ -177,7 +189,7 @@ public class StatusChangingTest {
     }
 
     @Test
-    void pressSaveAnotherStates(){
+    void pressSaveAnotherStatesTest(){
         //Проверка на то, что из другого состояния метод не изменит состояние бота на ожидание даты
         userDataCache.createPostCreator(user);
         userDataCache.getPostCreator(user.getId()).addText("Text");
@@ -189,7 +201,7 @@ public class StatusChangingTest {
         }
     }
     @Test
-    void userChooseDate(){
+    void userChooseDateTest(){
         userDataCache.setUserBotState(user.getId(),BotState.AWAITING_DATE);
         userDataCache.createPostCreator(user);
         userDataCache.getPostCreator(user.getId()).addText("Text");
@@ -197,7 +209,7 @@ public class StatusChangingTest {
         assertEquals(BotState.READY_TO_SAVE,userDataCache.getUsersBotState(user.getId()));
     }
     @Test
-    void userChooseDateWrongState(){
+    void userChooseDateWrongStateTest(){
         //Проверка на то, что метод переведет бота в статус READY_TO SAVE только из статуса ожидания сохранения
         userDataCache.createPostCreator(user);
         userDataCache.getPostCreator(user.getId()).addText("Text");
@@ -210,7 +222,7 @@ public class StatusChangingTest {
     }
 
     @Test
-    void userSaveDate(){
+    void userSaveDateTest(){
         //Проверка изменения статуса после сохранения даты, переход в базовое состояние
         userDataCache.setUserBotState(user.getId(),BotState.READY_TO_SAVE);
         userDataCache.createPostCreator(user);
@@ -219,7 +231,7 @@ public class StatusChangingTest {
         assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
     }
     @Test
-    void userSaveDateWrongState(){
+    void userSaveDateWrongStateTest(){
         //Проверка на то, что метод переведет бота в базовый статус только из состояния READY_TO_SAVE
         userDataCache.createPostCreator(user);
         userDataCache.getPostCreator(user.getId()).addText("Text");
@@ -232,7 +244,7 @@ public class StatusChangingTest {
     }
 
     @Test
-    void userPressAgainInputDate(){
+    void userPressAgainInputDateTest(){
         //Проверка того, что статус меняется на ожидание даты при нажатии пользователем кнопки о выборе другой даты
         userDataCache.setUserBotState(user.getId(),BotState.READY_TO_SAVE);
         userDataCache.createPostCreator(user);
@@ -326,8 +338,29 @@ public class StatusChangingTest {
         updateController.processUpdate(actions.adminPromoteUser(user));
         assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
     }
-
-    //TODO проверка MANAGE
-
-
+    @Test
+    void manageTest(){
+        //Проверка перехода состояния VIEW-> MANAGE
+        userDataCache.setUserBotState(user.getId(),BotState.VIEW);
+        updateController.processUpdate(actions.userPressManageCallback(user));
+        assertEquals(BotState.MANAGE,userDataCache.getUsersBotState(user.getId()));
+    }
+    @Test
+    void manageWrongStateTest(){
+        //Проверка на то, то что бот не переходит в состояние MANAGE из любого другого состояния
+        userDataCache.createPostCreator(user);
+        userDataCache.getPostCreator(user.getId());
+        for(BotState s: BotState.values()){
+            if(s!=BotState.VIEW){
+                userDataCache.setUserBotState(user.getId(),s);
+                updateController.processUpdate(actions.userPressManageCallback(user));
+                assertNotEquals(BotState.MANAGE,userDataCache.getUsersBotState(user.getId()));}
+        }
+    }
+    @Test
+    void manageToReadyToWorkTest(){
+        userDataCache.setUserBotState(user.getId(),BotState.MANAGE);
+        updateController.processUpdate(actions.userManagePost(user));
+        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
+    }
 }

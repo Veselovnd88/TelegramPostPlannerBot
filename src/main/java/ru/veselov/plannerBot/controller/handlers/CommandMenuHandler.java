@@ -11,7 +11,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import ru.veselov.plannerBot.cache.AdminActionsDataCache;
 import ru.veselov.plannerBot.cache.DataCache;
-import ru.veselov.plannerBot.controller.BotState;
+import ru.veselov.plannerBot.bots.BotState;
+import ru.veselov.plannerBot.controller.UpdateHandler;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.service.PostService;
@@ -128,7 +129,11 @@ public class CommandMenuHandler implements UpdateHandler {
         userDataCache.removePostCreator(userId);//FIXME удалить другие кеши
         BotState botState = userDataCache.getUsersBotState(userId);
         if(botState!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
-            userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
+            if(botState==BotState.PROMOTE_USER){
+                userDataCache.setUserBotState(userId,adminActionsDataCache.getStartBotState(userId));
+            }
+            else{
+                userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);}
         }
         return new SendMessage(update.getMessage().getChatId().toString(),RESET_POSTS);
     }

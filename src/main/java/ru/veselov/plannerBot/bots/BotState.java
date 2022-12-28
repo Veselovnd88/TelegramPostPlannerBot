@@ -1,4 +1,4 @@
-package ru.veselov.plannerBot.controller;
+package ru.veselov.plannerBot.bots;
 
 public enum BotState {
     READY_TO_WORK,
