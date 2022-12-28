@@ -8,10 +8,9 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.DataCache;
-import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.controller.UpdateHandler;
 import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.utils.Utils;
@@ -35,9 +34,9 @@ public class BotChatMemberActionsHandler implements UpdateHandler {
 
     @Override
     public BotApiMethod<?> processUpdate(Update update) {
-        try {
+            //FIXME очистка кеша, т.к. предыдущая команда была прервана
             if((update.getMyChatMember().getNewChatMember().getUser().getId())//бота присоединили к каналу
-                    .equals(bot.getMe().getId())){
+                    .equals(bot.getMyId())){
                 User user = update.getMyChatMember().getFrom();
                 Long userId = user.getId();
                 Chat chat = update.getMyChatMember().getChat();
@@ -47,6 +46,7 @@ public class BotChatMemberActionsHandler implements UpdateHandler {
                     userService.save(chat,user);
                     userDataCache.setUserBotState(userId, BotState.READY_TO_WORK);
                     log.info("Бот добавлен в канал {} пользователя {}", chat.getTitle(), userId);
+                    //FIXME статус изменился - чистим кеши
                     return utils.removeKeyBoard(SendMessage.builder().chatId(userId)
                             .text("Вы присоединили меня к каналу "+chat.getTitle()).build());
                 }
@@ -58,30 +58,34 @@ public class BotChatMemberActionsHandler implements UpdateHandler {
                         update.getMyChatMember().getNewChatMember().getStatus()
                                 .equalsIgnoreCase("kicked")){
                     Map<Long,Integer> ids = userService.findUsersWithChat(chat.getId().toString());
+                    //Пишет каждому пользователю, что бота удалили с канала
                     for(var pair : ids.entrySet() ){
+                        //FIXME - статус изменился, чистим кеши
                         if(pair.getValue()==1){
                             userDataCache.setUserBotState(pair.getKey(), BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
                             log.info("Статус переключен на Ожидание канала для {}",
                                     pair.getKey());
                         }
+                        else{
+                            userDataCache.setUserBotState(pair.getKey(),BotState.READY_TO_WORK);
+                        }
+                        String message="";
                         if(update.getMyChatMember().getNewChatMember().getStatus().equalsIgnoreCase("left")){
-                            userService.removeChat(chat.getId().toString());
-                            return utils.removeKeyBoard(SendMessage.builder().chatId(pair.getKey())
-                                    .text("Я больше не админ канала "+chat.getTitle()).build());
+                            message=String.format("Я больше не админ канала %s",chat.getTitle());
                         }
                         if(update.getMyChatMember().getNewChatMember().getStatus().equalsIgnoreCase("kicked")){
-                            userService.removeChat(chat.getId().toString());
-                            return utils.removeKeyBoard(SendMessage.builder().chatId(pair.getKey())
-                                    .text(
-                                            "Я кикнут с канала "+chat.getTitle()+"чтобы продолжить работу удалите меня из администраторов, и присоедините снова").build());
+                            message=String.format("Я кикнут с канала %s,чтобы продолжить работу удалите меня из администраторов, и присоедините снова",chat.getTitle());
                         }
+                        userService.removeChat(chat.getId().toString());
+                        return utils.removeKeyBoard(SendMessage.builder().chatId(pair.getKey())
+                                .text(message).build());
+
                     }
                 }
+                log.info("Что то другое произошло со статусом бота {}",update.getMyChatMember());
                 return null ;
             }
-        } catch (TelegramApiException e) {
-            log.error("Ошибка при присоединении бота к каналу: {}", e.getMessage());
-        }
+        log.info("В канале произошло изменение {}",update.getMyChatMember());
         return null;
     }
 }

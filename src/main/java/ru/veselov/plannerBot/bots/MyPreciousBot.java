@@ -36,6 +36,7 @@ public class MyPreciousBot extends TelegramWebhookBot {
     private final UpdateController updateController;
     private final TelegramBotsApi telegramBotsApi;
     private  final BotProperties botProperties;
+    private Long myId;
     @Autowired
     public MyPreciousBot(@Lazy UpdateController updateController, TelegramBotsApi telegramBotsApi, SetWebhook setWebhook, BotProperties botProperties) {
         this.updateController = updateController;
@@ -60,6 +61,8 @@ public class MyPreciousBot extends TelegramWebhookBot {
             this.execute(new SetMyCommands(commandList, new BotCommandScopeDefault(), null));
             this.execute(new SetMyCommands(commandsAdmin,botCommandScopeChat,null));
             log.info("Меню установлено");
+            myId=this.getMe().getId();
+            log.info("Id бота{}", myId);
         } catch (TelegramApiException e) {
             log.error("Произошла ошибка при запуске бота: {}", e.getMessage());
             throw new RuntimeException(e);
