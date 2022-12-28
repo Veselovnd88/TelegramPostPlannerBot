@@ -1,6 +1,5 @@
 package ru.veselov.plannerBot.controller;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -10,8 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.UserDataCache;
 import ru.veselov.plannerBot.controller.handlers.CommandMenuHandler;
@@ -29,7 +26,9 @@ import ru.veselov.plannerBot.service.UserService;
 import ru.veselov.plannerBot.utils.BotProperties;
 
 import java.text.SimpleDateFormat;
-import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -82,6 +81,7 @@ public class UpdateControllerTest {
     public MessageEntity mockEntity = Mockito.mock(MessageEntity.class);
 
 
+
     @BeforeEach
     void setUp(){
         sdf = new SimpleDateFormat("dd.MM.yyyy HH mm");
@@ -111,7 +111,6 @@ public class UpdateControllerTest {
         for(int i=0; i<tests; i++) {
             Long userId = i-1000L;
             user.setId(userId);
-            runAllActions(user,date);
             assertNotNull(userService.findAllChatsByUser(user));
             assertEquals(1,postService.findByUser(user).size());
             PostEntity post = postService.findByUser(user).get(0);
@@ -122,255 +121,53 @@ public class UpdateControllerTest {
         assertEquals(0,userDataCache.getPostCreators().size());
     }
     /////////////////
-
-
     @Test
-    void checkStates(){
-        user.setId(-105L);
-        //старт-сброс
-        userPressStart(user);//старт, каналов нет
-        assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
-        userCreatePost(user);//создать пост, но каналов нет
-        assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
-        userReset(user);//сброс, каналов нет
-        assertEquals(BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL,userDataCache.getUsersBotState(user.getId()));
-        //Добавили в канал - начали создавать пост-сбросили
-        userAddToChannels(user); //добавили в канал
-        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
-        userCreatePost(user);//создаем пост
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userReset(user);
-        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
-        assertEquals(0,userDataCache.getPostCreators().size());
-        /*Сброс после добавления текста*/
-        userCreatePost(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userSendText(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userSendText(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userReset(user);
-        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
-        assertEquals(0,userDataCache.getPostCreators().size());
-        /*Сброс после выбора каналов*/
-        userCreatePost(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userSendText(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userSendText(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userPressButtonForChoseChanel(user);
-        assertEquals(BotState.AWAITING_DATE,userDataCache.getUsersBotState(user.getId()));
-        userReset(user);
-        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
-        assertEquals(0,userDataCache.getPostCreators().size());
-        /*Сброс после ввода даты
-        * */
-        userCreatePost(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userSendText(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userSendText(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userPressButtonForChoseChanel(user);
-        assertEquals(BotState.AWAITING_DATE,userDataCache.getUsersBotState(user.getId()));
-        userInputDate(user, "19.12.2022 16 00");
-        assertEquals(BotState.READY_TO_SAVE, userDataCache.getUsersBotState(user.getId()));
-        userReset(user);
-        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
-        assertEquals(0,userDataCache.getPostCreators().size());
-        /* Бот добавлен в канал - начали создавать пост, отправили текст 2 раза, выбрали канал,
-        ввели дату, нажали сохранить
-         */
-        userCreatePost(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userSendText(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userSendText(user);
-        assertEquals(BotState.AWAITING_POST,userDataCache.getUsersBotState(user.getId()));
-        userPressButtonForChoseChanel(user);
-        assertEquals(BotState.AWAITING_DATE,userDataCache.getUsersBotState(user.getId()));
-        userInputDate(user, "19.12.2022 16 00");
-        assertEquals(BotState.READY_TO_SAVE, userDataCache.getUsersBotState(user.getId()));
-        userPressButtonSave(user);
-        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
-        //удаление за собой
-        userService.removeUser(user);
+    void userWorkFlowTest(){
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        for(int i=0; i<5; i++){
+            int finalI = i;
+            executorService.execute(() -> {
+                System.out.println("Поток № "+finalI);
+                User user=new User();
+                user.setId(-100L- (long) finalI);
+                user.setFirstName("Vasya "+finalI);
+                user.setLastName("Petya "+ finalI);
+                user.setUserName("ZloyPetya "+finalI);
+                workFlow(user);
+                assertNotNull(userService.findAllChatsByUser(user));
+                assertEquals(1,postService.findByUser(user).size());
+                PostEntity post = postService.findByUser(user).get(0);
+                assertEquals(PostState.SAVED, post.getPostState());
+                userService.removeUser(user);
+            });
+        }
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        //workFlow(user);
+        /*assertNotNull(userService.findAllChatsByUser(user));
+        assertEquals(1,postService.findByUser(user).size());
+        PostEntity post = postService.findByUser(user).get(0);
+        assertEquals(PostState.SAVED, post.getPostState());
+        userService.removeUser(user);*/
     }
 
 
     /*Два пользователя рандомно создают посты*/
-    @Test
-    void usersRandomActions(){
-        String date = "19.12.2022 16 00";
-        userPressStart(user);
-        userPressStart(user2);
-        userAddToChannels(user);
-        userAddToChannels(user2);
-        Assertions.assertEquals(1,userService.findAllChatsByUser(user).size());
-        Assertions.assertEquals(1,userService.findAllChatsByUser(user2).size());
-        userCreatePost(user);
-        userCreatePost(user2);
-        userSendText(user);
-        userPressButtonForChoseChanel(user);
-        userSendText(user2);
-        userPressButtonForChoseChanel(user2);
-        userInputDate(user2,date);
-        userInputDate(user,date);
-        userPressButtonSave(user);
-        userPressButtonSave(user2);
-        Assertions.assertEquals(1,postService.findByUser(user).size());
-        Assertions.assertEquals(1,postService.findByUser(user2).size());
-        assertEquals(0,userDataCache.getPostCreators().size());
-        //Удаление за собой
-        userService.removeUser(user);
-        userService.removeUser(user2);
-    }
 
 
-    /*Пользователь два раза подряд жмет кнопку Сохранить*/
-    @Test
-    void twoTimesPressSave(){
-        user.setId(-101L);
-        String date ="19.11.2022 16 00";
-        userAddToChannels(user);
-        userCreatePost(user);
-        userSendText(user);
-        userPressButtonForChoseChanel(user);
-        userInputDate(user,date);
-        userPressButtonSave(user);
-        userPressButtonSave(user);
-        assertEquals(0,userDataCache.getPostCreators().size());
-        //Удаление за собой
-        userService.removeUser(user);
-    }
-
-    private void runAllActions(User user,String date){
-        userPressStart(user);
-        userAddToChannels(user);
-        userCreatePost(user);
-        userSendText(user);
-        userSendText(user);
-        userPressButtonForChoseChanel(user);
-        userInputDate(user,date);
-        userPressButtonSave(user);
-    }
-
-
-
-
-    private void userPressStart(User user){
-        when(mockUpdate.hasMessage()).thenReturn(true);
-        when(mockMessage.hasText()).thenReturn(true);
-        when(mockMessage.getFrom()).thenReturn(user);
-        when(mockMessage.getText()).thenReturn("/start");
-        when(mockMessage.getChatId()).thenReturn(user.getId());
-        when(mockMessage.hasEntities()).thenReturn(true);
-        when(mockEntity.getType()).thenReturn("bot_command");
-        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
-        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
-        updateController.processUpdate(mockUpdate);
-    }
-
-    private void userAddToChannels(User user) {
-        try {
-            botId = bot.getMe().getId();
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
-        when(mockUpdate.hasMessage()).thenReturn(false);
-        when(mockUpdate.hasMyChatMember()).thenReturn(true);
-        when(mockMessage.getChatId()).thenReturn(user.getId());
-        when(mockMessage.getFrom()).thenReturn(user);
-        when(chatMemberUpdated.getNewChatMember()).thenReturn(mockChatMember);
-        when(chatMemberUpdated.getFrom()).thenReturn(user);
-        when(chatMemberUpdated.getChat()).thenReturn(chat);
-        when(mockUpdate.getMyChatMember()).thenReturn(chatMemberUpdated);
-        when(mockChatMember.getUser()).thenReturn(user);
-        when(chatMemberUpdated.getNewChatMember()).thenReturn(mockChatMember);
-        when(mockChatMember.getUser()).thenReturn(mockBotUser);
-        when(mockBotUser.getId()).thenReturn(botId);
-        when(mockChatMember.getStatus()).thenReturn("administrator");
-        updateController.processUpdate(mockUpdate);
-    }
-
-    private void userCreatePost(User user){
-        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
-        when(mockUpdate.hasMessage()).thenReturn(true);
-        when(mockMessage.hasEntities()).thenReturn(true);
-        when(mockEntity.getType()).thenReturn("bot_command");
-        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
-        when(mockUpdate.hasMyChatMember()).thenReturn(false);
-        when(mockMessage.hasText()).thenReturn(true);
-        when(mockMessage.getFrom()).thenReturn(user);
-        when(mockMessage.getChatId()).thenReturn(user.getId());
-        when(mockMessage.getText()).thenReturn("/create");
-        updateController.processUpdate(mockUpdate);
-    }
-
-    private void userSendText(User user){
-        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
-        when(mockUpdate.hasMessage()).thenReturn(true);
-        when(mockUpdate.hasMyChatMember()).thenReturn(false);
-        when(mockMessage.getFrom()).thenReturn(user);
-        when(mockMessage.hasText()).thenReturn(true);
-        when(mockMessage.getChatId()).thenReturn(user.getId());
-        when(mockMessage.getText()).thenReturn("Тестовый текст");
-        updateController.processUpdate(mockUpdate);
-    }
-
-    private void userPressButtonForChoseChanel(User user){
-        when(mockUpdate.hasMyChatMember()).thenReturn(false);
-        when(mockUpdate.hasMessage()).thenReturn(false);
-        when(mockUpdate.hasCallbackQuery()).thenReturn(true);
-        when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
-        when(mockUpdate.getCallbackQuery().getId()).thenReturn("1");
-        when(mockCallBack.getData()).thenReturn("test1");
-        when(mockCallBack.getFrom()).thenReturn(user);
-        when(mockMessage.getChatId()).thenReturn(user.getId());
-        when(mockCallBack.getMessage()).thenReturn(mockMessage);
-        updateController.processUpdate(mockUpdate);
-    }
-
-    private void userInputDate(User user,String date){
-        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
-        when(mockUpdate.hasMessage()).thenReturn(true);
-        when(mockMessage.getFrom()).thenReturn(user);
-        when(mockUpdate.hasMyChatMember()).thenReturn(false);
-        when(mockMessage.hasText()).thenReturn(true);
-        when(mockMessage.hasEntities()).thenReturn(true);
-        when(mockEntity.getType()).thenReturn("_");
-        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
-        when(mockMessage.getChatId()).thenReturn(user.getId());
-        when(mockMessage.getText()).thenReturn(date);
-        updateController.processUpdate(mockUpdate);
-    }
-
-    private void userPressButtonSave(User user){
-        when(mockUpdate.hasMyChatMember()).thenReturn(false);
-        when(mockUpdate.hasMessage()).thenReturn(false);
-        when(mockUpdate.hasCallbackQuery()).thenReturn(true);
-        when(mockUpdate.getCallbackQuery()).thenReturn(mockCallBack);
-        when(mockCallBack.getData()).thenReturn("saveYes");
-        when(mockCallBack.getFrom()).thenReturn(user);
-        when(mockCallBack.getMessage()).thenReturn(mockMessage);
-        when(mockMessage.getChatId()).thenReturn(user.getId());
-        updateController.processUpdate(mockUpdate);
-    }
-
-    private void userReset(User user){
-        when(mockUpdate.hasCallbackQuery()).thenReturn(false);
-        when(mockUpdate.hasMessage()).thenReturn(true);
-        when(mockUpdate.hasMyChatMember()).thenReturn(false);
-        when(mockMessage.getFrom()).thenReturn(user);
-        when(mockMessage.hasText()).thenReturn(true);
-        when(mockMessage.getChatId()).thenReturn(user.getId());
-        when(mockMessage.getText()).thenReturn("/reset");
-        when(mockMessage.hasEntities()).thenReturn(true);
-        when(mockEntity.getType()).thenReturn("bot_command");
-        when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
-        updateController.processUpdate(mockUpdate);
+    private void workFlow(User user){
+        UserActions userActions = new UserActions();
+        updateController.processUpdate(userActions.userPressStart(user));
+        updateController.processUpdate(userActions.botAndChannelAction("administrator",user, bot.getMyId()));
+        updateController.processUpdate(userActions.userCreatePost(user));
+        updateController.processUpdate(userActions.userPressButtonForChoseChanel(user,"postAll"));
+        updateController.processUpdate(userActions.userInputDate(user,"31.12.2022 15 00"));
+        updateController.processUpdate(userActions.userSavedDate(user));
     }
 
 }
