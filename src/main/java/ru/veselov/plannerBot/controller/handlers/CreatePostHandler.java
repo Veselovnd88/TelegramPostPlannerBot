@@ -36,6 +36,22 @@ public class CreatePostHandler implements UpdateHandler {
                 String text = update.getMessage().getText();
                 log.info("Сохранил текст в пост для юзера {}",userId);
                 userDataCache.getPostCreator(userId).addText(text);
+                //TODO
+                if(update.getMessage().hasEntities()){
+                    //entity="text_link" - ссылка - то забираем ентити к этому тексту
+                    //{
+                    //                        "offset": 96,
+                    //                        "length": 8,
+                    //                        "type": "text_link",
+                    //                        "url": ""
+                    //                    },
+                    //                    {
+                    //                        "offset": 115,
+                    //                        "length": 12,
+                    //                        "type": "mention"
+                    //                    },
+                    //entity="mention" - упоминание @юзернейм
+                }
             }
             //TODO сохранение файлов в форме byte[] в базе данных если решим сохранять файлы
             if(update.getMessage().hasPhoto()){

@@ -22,6 +22,15 @@ public class TextEntity {
 
     @Column(name = "text", columnDefinition = "varchar(4096)")
     private String text;
+    @Column(name="ent_type")
+    private String entityType;
+
+    @Column(name="offset")
+    private Integer offset;
+    @Column(name="length")
+    private Integer length;
+    @Column(name="url")
+    private String url;
 
     @ManyToOne
     @JoinColumn(name="post_id",referencedColumnName = "post_id")

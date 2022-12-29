@@ -7,6 +7,8 @@ import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.MessageEntity;
+import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
 import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
@@ -14,9 +16,7 @@ import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.utils.MessageUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -43,6 +43,7 @@ public class PostSender {
                 SendMessage sendMessage = new SendMessage(chat.getId().toString(), text);
                 bot.sendMessageBot(sendMessage);
             }
+
             for (var photo : post.getPhotos()) {
                 SendPhoto sendPhoto = new SendPhoto();
                 sendPhoto.setChatId(chat.getId());
@@ -166,6 +167,16 @@ public class PostSender {
 
     public void removeTimer(Integer postId){
         timers.remove(postId);
+    }
+
+
+    private SendMediaGroup groupEntities(List<InputMedia> medias){
+        return SendMediaGroup.builder().medias(medias).build();
+        //TODO при формировании поста проверять как были отправлены фотографии - отдельно или в медиагруппе
+        //Если отдельно то ставим у ентити поле в 0, и сохраняем, как сохраняли
+        //если есть mediagroup - то к фотографии сохраняем Id группы
+        //Далее - получаем весь список картинок и формируем linkedLisT по группам c медиагрупп
+        //для каждой такой группы сроздается объект сендмедиа групп
     }
 
 }
