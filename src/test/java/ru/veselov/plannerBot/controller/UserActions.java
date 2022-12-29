@@ -6,13 +6,12 @@ import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 
 import java.util.List;
 
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class UserActions {
-    public Update mockUpdate= Mockito.mock(Update.class);
-    public Message mockMessage=Mockito.mock(Message.class);
-    public MessageEntity mockEntity= Mockito.mock(MessageEntity.class);
+    public Update mockUpdate= spy(Update.class);
+    public Message mockMessage=mock(Message.class);
+    public MessageEntity mockEntity= mock(MessageEntity.class);
     public CallbackQuery mockCallBack=spy(CallbackQuery.class);
     private User mockUser = spy(User.class);
     public ChatMemberUpdated chatMemberUpdated = spy(ChatMemberUpdated.class);
@@ -72,13 +71,14 @@ public class UserActions {
     public Update userInputDate(User user,String date){
         /*Пользователь вводит дату(вручную)*/
         setUpUpdateMessage();
+        when(mockMessage.getText()).thenReturn(date);
         when(mockMessage.getFrom()).thenReturn(user);
         when(mockMessage.hasText()).thenReturn(true);
         when(mockMessage.hasEntities()).thenReturn(true);
         when(mockEntity.getType()).thenReturn("_");
         when(mockMessage.getEntities()).thenReturn(List.of(mockEntity));
         when(mockMessage.getChatId()).thenReturn(user.getId());
-        when(mockMessage.getText()).thenReturn(date);
+
         return mockUpdate;
     }
 

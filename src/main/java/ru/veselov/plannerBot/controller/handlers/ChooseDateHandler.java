@@ -28,7 +28,7 @@ public class ChooseDateHandler implements UpdateHandler {
     private final Locale locale = new Locale("ru");
 
     private final DataCache userDataCache;
-    private final SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH mm");
+
     @Autowired
     public ChooseDateHandler(DataCache userDataCache) {
         this.userDataCache = userDataCache;
@@ -67,6 +67,7 @@ public class ChooseDateHandler implements UpdateHandler {
                 //проверка ручного ввода
                 if(update.hasMessage()&&update.getMessage().hasText()){
                     try {
+                        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH mm");
                         Date date = sdf.parse(update.getMessage().getText());
                         return savePostAfterInputDate(update.getMessage().getChatId().toString(), date, userId);
 
@@ -227,6 +228,7 @@ public class ChooseDateHandler implements UpdateHandler {
     }
 
     private SendMessage savePostAfterInputDate(String chatId, Date date, Long userId){
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH mm");
         userDataCache.getPostCreator(userId).getPost().setDate(date);
         log.info("Установлена дата поста {} для пользователя {}", date.toString(), userId);
         userDataCache.setUserBotState(userId, BotState.READY_TO_SAVE);

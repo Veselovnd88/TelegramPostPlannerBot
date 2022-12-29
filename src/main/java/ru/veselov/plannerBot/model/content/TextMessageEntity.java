@@ -14,12 +14,12 @@ import javax.persistence.*;
 @Setter
 @NoArgsConstructor
 @TypeDef(name="jsonb", typeClass = JsonBinaryType.class)
-public class MessageEntity {
+public class TextMessageEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
     @Type(type = "jsonb")
     @Column(name="entity",columnDefinition = "jsonb")
-    private MessageEntity entity;
+    private TextMessageEntity entity;
 }

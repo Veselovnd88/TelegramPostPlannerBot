@@ -124,22 +124,25 @@ public class UpdateControllerTest {
     @Test
     void userWorkFlowTest(){
         ExecutorService executorService = Executors.newFixedThreadPool(10);
-        for(int i=0; i<5; i++){
-            int finalI = i;
-            executorService.execute(() -> {
-                System.out.println("Поток № "+finalI);
-                User user=new User();
-                user.setId(-100L- (long) finalI);
-                user.setFirstName("Vasya "+finalI);
-                user.setLastName("Petya "+ finalI);
-                user.setUserName("ZloyPetya "+finalI);
-                workFlow(user);
-                assertNotNull(userService.findAllChatsByUser(user));
-                assertEquals(1,postService.findByUser(user).size());
-                PostEntity post = postService.findByUser(user).get(0);
-                assertEquals(PostState.SAVED, post.getPostState());
-                userService.removeUser(user);
-            });
+        for(int i=0; i<100; i++){
+            User user1=new User();
+            user1.setId(-100L- (long) i);
+            user1.setFirstName("Vasya "+i);
+            user1.setLastName("Petya "+ i);
+            user1.setUserName("ZloyPetya "+i);
+            Runnable task=new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("Поток go");
+                    workFlow(user1);
+                    assertNotNull(userService.findAllChatsByUser(user1));
+                    assertEquals(1,postService.findByUser(user1).size());
+                    PostEntity post = postService.findByUser(user1).get(0);
+                    assertEquals(PostState.SAVED, post.getPostState());
+                    userService.removeUser(user1);
+                }
+            };
+            executorService.execute(task);
         }
         executorService.shutdown();
         try {
@@ -160,7 +163,7 @@ public class UpdateControllerTest {
     /*Два пользователя рандомно создают посты*/
 
 
-    private void workFlow(User user){
+    private  void workFlow(User user){
         UserActions userActions = new UserActions();
         updateController.processUpdate(userActions.userPressStart(user));
         updateController.processUpdate(userActions.botAndChannelAction("administrator",user, bot.getMyId()));
