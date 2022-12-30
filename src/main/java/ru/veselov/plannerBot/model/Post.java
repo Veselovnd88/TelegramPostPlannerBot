@@ -34,5 +34,7 @@ public class Post {
 
     private Set<Chat> chats= new HashSet<>();
 
+    private List<Message> messages=new LinkedList<>();
+
     private User user;
 }

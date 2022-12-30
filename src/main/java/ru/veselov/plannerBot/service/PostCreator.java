@@ -40,6 +40,11 @@ public class PostCreator {
         this.post.getCaption().put(fileId,caption);
     }
 
+    public void addMessage(Message message){
+        log.info("Добавлено сообщение из телеграм {}",user.getId());
+        this.post.getMessages().add(message);
+    }
+
 
 
     public void addAudio(Audio audio) {

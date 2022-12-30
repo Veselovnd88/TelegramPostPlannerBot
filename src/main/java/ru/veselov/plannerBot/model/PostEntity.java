@@ -31,6 +31,12 @@ public class PostEntity {
         orphanRemoval = true)
     private List<TextEntity> texts=new LinkedList<>();
 
+    ////////////
+    @OneToMany(mappedBy = "post",
+    cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MessageDBEntity> messages = new LinkedList<>();
+
+    ///////////
     @OneToMany(mappedBy = "post",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
@@ -89,6 +95,14 @@ public class PostEntity {
         te.setPost(this);
         this.texts.add(te);
     }
+
+
+    ////////////
+    public void addMessage(MessageDBEntity messageDB){
+        messageDB.setPost(this);
+        this.messages.add(messageDB);
+    }
+    ////////////
 
     public void addPhoto(PhotoEntity photo) {
         photo.setPost(this);
