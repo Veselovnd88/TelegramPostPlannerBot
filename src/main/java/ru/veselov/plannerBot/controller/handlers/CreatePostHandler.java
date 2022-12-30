@@ -31,15 +31,15 @@ public class CreatePostHandler implements UpdateHandler {
     }
 
     public SendMessage processUpdate(Update update){
-            Long userId=update.getMessage().getFrom().getId();
-            if(update.getMessage().hasText()){
-                String text = update.getMessage().getText();
-                log.info("Сохранил текст в пост для юзера {}",userId);
-                userDataCache.getPostCreator(userId).addText(text);
-                //TODO
-                if(update.getMessage().hasEntities()){
-
-                }
+        Long userId=update.getMessage().getFrom().getId();
+        //Сохранение текста с параметрами форматирования
+        if(update.getMessage().hasText()){
+            Message message = new Message();
+            String text = update.getMessage().getText();
+            message.setText(text);
+            message.setEntities(update.getMessage().getEntities());
+            userDataCache.getPostCreator(userId).addMessage(message);
+            log.info("Сохранен текст с разметкой для пользователя {}",userId);
             }
             //TODO сохранение файлов в форме byte[] в базе данных если решим сохранять файлы
             if(update.getMessage().hasPhoto()){

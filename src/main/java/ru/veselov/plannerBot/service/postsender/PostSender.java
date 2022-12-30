@@ -39,11 +39,20 @@ public class PostSender {
             SendMessage errorMessage = new SendMessage(chat.getId().toString(), error);
             log.info("Отправляю пост {} в {} в канал {}",post.getPostId(), post.getDate().toString(),
                     chat.getTitle());
-            for (var text : post.getTexts()) {
-                SendMessage sendMessage = new SendMessage(chat.getId().toString(), text);
-                bot.sendMessageBot(sendMessage);
-            }
 
+            for(var message: post.getMessages()){
+                if(message.hasText()){
+                    bot.sendMessageBot(SendMessage.builder()
+                                    .chatId(chat.getId())
+                            .text(message.getText()).entities(message.getEntities()).build());
+                }
+                if (message.hasPhoto()){
+                    if(message.getMediaGroupId()==null){
+
+                    }
+
+                }
+            }
             for (var photo : post.getPhotos()) {
                 SendPhoto sendPhoto = new SendPhoto();
                 sendPhoto.setChatId(chat.getId());

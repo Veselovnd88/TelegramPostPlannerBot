@@ -14,7 +14,6 @@ import ru.veselov.plannerBot.model.PostEntity;
 import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.repository.ChatRepository;
 import ru.veselov.plannerBot.repository.PostRepository;
-import ru.veselov.plannerBot.repository.TextRepository;
 import ru.veselov.plannerBot.repository.UserRepository;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.service.UserService;
@@ -47,8 +46,6 @@ public class UpdateControllerTest {
     private ChatRepository chatRepository;
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private TextRepository textRepository;
     @Autowired
     private UserDataCache userDataCache;
     @Autowired

@@ -38,8 +38,6 @@ public class PostServiceTest {
     @Autowired
     private PostRepository postRepository;
     @Autowired
-    private TextRepository textRepository;
-    @Autowired
     private AudioRepository audioRepository;
     @Autowired
     private DocumentRepository documentRepository;

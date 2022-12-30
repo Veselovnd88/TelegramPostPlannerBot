@@ -146,9 +146,13 @@ public class PostService {
         PostEntity postEntity = new PostEntity();
         if(post.getPostId()!=0){
             postEntity.setPostId(post.getPostId());}
-        for(var text: post.getTexts()){
-            postEntity.addText(new TextEntity(text));
+        //////
+        for(Message m: post.getMessages()){
+            MessageDBEntity messageDBEntity=new MessageDBEntity();
+            messageDBEntity.setMessage(m);
+            postEntity.addMessage(messageDBEntity);
         }
+        ////
         for(var audio: post.getAudios()){
             AudioEntity audioEntity = new AudioEntity(audio.getFileId(), audio.getFileName());
             if(post.getCaption().containsKey(audio.getFileId())){
@@ -209,6 +213,8 @@ public class PostService {
         post.setPostState(pe.getPostState());
         post.setPostId(pe.getPostId());
         post.setDate(pe.getDate());
+        post.setMessages(pe.getMessages().stream().map(MessageDBEntity::getMessage).toList());
+
         post.setChats(pe.getChats().stream().map(userService::entityToChat).collect(Collectors.toSet()));
         for(var a: pe.getAudios()){
             if(a.getCaption()!=null){
@@ -228,8 +234,6 @@ public class PostService {
             }
             post.getPhotos().add(entityToPhotoSize(p));
         }
-
-        post.setTexts(pe.getTexts().stream().map(TextEntity::getText).collect(Collectors.toList()));
         post.setVideos(pe.getVideos().stream().map(this::entityToVideo).collect(Collectors.toList()));
         for(var v: pe.getVideos()){
             if(v.getCaption()!=null){
