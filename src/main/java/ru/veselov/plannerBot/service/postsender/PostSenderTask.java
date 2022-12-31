@@ -3,6 +3,7 @@ package ru.veselov.plannerBot.service.postsender;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
@@ -29,8 +30,12 @@ public class PostSenderTask extends TimerTask {
 
     @Override
     public void run() {
-         postSender.send(post);
-         post.setPostState(PostState.SENT);
+        try {
+            postSender.send(post);
+        } catch (TelegramApiException e) {
+            log.error("Не удалось отправить сообщение {}", e.getMessage());
+        }
+        post.setPostState(PostState.SENT);
          postService.savePost(post);
          postSender.removeTimer(post.getPostId());
     }

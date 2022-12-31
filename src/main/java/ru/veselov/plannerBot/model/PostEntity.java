@@ -33,25 +33,6 @@ public class PostEntity {
     private List<MessageDBEntity> messages = new LinkedList<>();
 
     ///////////
-    @OneToMany(mappedBy = "post",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
-    private List<PhotoEntity> photos=new LinkedList<>();
-
-    @OneToMany(mappedBy = "post",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
-    private List<AudioEntity> audios=new LinkedList<>();
-
-    @OneToMany(mappedBy = "post",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
-    private List<VideoEntity> videos=new LinkedList<>();
-
-    @OneToMany(mappedBy = "post",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
-    private List<DocEntity> docs=new LinkedList<>();
 
     @OneToMany(mappedBy = "post",
             cascade = CascadeType.ALL,
@@ -86,34 +67,12 @@ public class PostEntity {
     public void setUser(UserEntity user){
         this.user=user;
     }
-
-
     ////////////
     public void addMessage(MessageDBEntity messageDB){
         messageDB.setPost(this);
         this.messages.add(messageDB);
     }
     ////////////
-
-    public void addPhoto(PhotoEntity photo) {
-        photo.setPost(this);
-        this.photos.add(photo);
-    }
-
-    public void addAudio(AudioEntity audio) {
-        audio.setPost(this);
-        audios.add(audio);
-    }
-    public void addVideo(VideoEntity video) {
-        video.setPost(this);
-        videos.add(video);
-    }
-
-    public void addDoc(DocEntity doc) {
-        doc.setPost(this);
-        docs.add(doc);
-    }
-
     public void addPoll(PollEntity poll) {
         poll.setPost(this);
         polls.add(poll);

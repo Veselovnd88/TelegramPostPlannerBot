@@ -3,13 +3,14 @@ package ru.veselov.plannerBot.service.postsender;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
-import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
-import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
+import org.telegram.telegrambots.meta.api.objects.media.*;
 import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
@@ -33,7 +34,7 @@ public class PostSender {
 
 
     /*TODO предусмотреть помещение постов в очередь если телеграм отдал ошибку 429 (много постов в 1 секунду)*/
-    public void send(Post post) {
+    public void send(Post post) throws TelegramApiException {
         Map<String, SendMediaGroup> groupsCache = new HashMap<>();
         for(Chat chat: post.getChats()) {
             String error = MessageUtils.ERROR_MESSAGE;
@@ -46,12 +47,11 @@ public class PostSender {
                                     .chatId(chat.getId())
                             .text(message.getText()).entities(message.getEntities()).build());
                 }
-
-
                 if (message.hasPhoto()){
                     if(message.getMediaGroupId()==null){
                         SendPhoto sendPhoto = new SendPhoto();
                         sendPhoto.setChatId(chat.getId());
+                        //sendPhoto.setParseMode();
                         sendPhoto.setCaption(message.getCaption());
                         sendPhoto.setCaptionEntities(message.getCaptionEntities());
                         sendPhoto.setPhoto(new InputFile(message.getPhoto().get(0).getFileId()));
@@ -70,63 +70,122 @@ public class PostSender {
                             groupsCache.get(mediaGroupId).getMedias().add(inputMediaPhoto);
                         }
                         else{
-                            SendMediaGroup sendMediaGroup = new SendMediaGroup();
-                            sendMediaGroup.setChatId(chat.getId());
-                            List<InputMedia> list=new LinkedList<>();
-                            list.add(inputMediaPhoto);
-                            sendMediaGroup.setMedias(list);
+                            SendMediaGroup sendMediaGroup = createSendMediaGroup(chat, inputMediaPhoto);
                             groupsCache.put(mediaGroupId, sendMediaGroup);
                         }
                         //Проверяем, что все посты из этой группы выбраны, и если да - отправляем группу
-                        int groupSize = post.getMessages().stream().filter(x->x.getMediaGroupId()!=null)
-                                .map(x -> x.getMediaGroupId()
-                                .equals(message.getMediaGroupId())).toList().size();
-                        if(groupSize==groupsCache.get(mediaGroupId).getMedias().size()){
-                            try {
+                        if(checkIfMediaGroupReadyToSend(post,message,groupsCache.get(mediaGroupId))){
+                            bot.execute(groupsCache.get(mediaGroupId));
+                        }
+                    }
+                }
+                if (message.hasDocument()){
+                    if(message.getMediaGroupId()==null){
+                        SendDocument sendDocument = new SendDocument();
+                        sendDocument.setChatId(chat.getId());
+                        sendDocument.setCaption(message.getCaption());
+                        sendDocument.setCaptionEntities(message.getCaptionEntities());
+                        sendDocument.setDocument(new InputFile(message.getDocument().getFileId()));
+                        bot.execute(sendDocument);
+
+                    }
+                    else{
+                        String mediaGroupId = message.getMediaGroupId();
+                        InputMediaDocument inputMediaDocument = new InputMediaDocument(message.getDocument().getFileId());
+                        inputMediaDocument.setCaption(message.getCaption());
+                        inputMediaDocument.setCaptionEntities(message.getCaptionEntities());
+                        if(groupsCache.containsKey(message.getMediaGroupId())){
+                            groupsCache.get(mediaGroupId).getMedias().add(inputMediaDocument);
+                        }
+                        else{
+                            SendMediaGroup sendMediaGroup = createSendMediaGroup(chat, inputMediaDocument);
+                            groupsCache.put(mediaGroupId, sendMediaGroup);
+                        }
+                        if(checkIfMediaGroupReadyToSend(post,message,groupsCache.get(mediaGroupId))){
                                 bot.execute(groupsCache.get(mediaGroupId));
-                            } catch (TelegramApiException e) {
-                                log.error("Ошибка при отправке"); //FIXME exception to mehtod signature
-                            }
+                        }
+                    }
+                }
+                if (message.hasAudio()){
+                    if(message.getMediaGroupId()==null){
+                        SendAudio sendAudio = new SendAudio();
+                        sendAudio.setChatId(chat.getId());
+                        sendAudio.setCaption(message.getCaption());
+                        sendAudio.setCaptionEntities(message.getCaptionEntities());
+                        sendAudio.setAudio(new InputFile(message.getAudio().getFileId()));
+                        bot.execute(sendAudio);
+                    }
+                    else{
+                        String mediaGroupId = message.getMediaGroupId();
+                        InputMediaAudio inputMediaAudio = new InputMediaAudio(message.getAudio().getFileId());
+                        inputMediaAudio.setCaption(message.getCaption());
+                        inputMediaAudio.setCaptionEntities(message.getCaptionEntities());
+                        if(groupsCache.containsKey(message.getMediaGroupId())){
+                            groupsCache.get(mediaGroupId).getMedias().add(inputMediaAudio);
+                        }
+                        else{
+                            SendMediaGroup sendMediaGroup = createSendMediaGroup(chat, inputMediaAudio);
+                            groupsCache.put(mediaGroupId, sendMediaGroup);
+                        }
+                        if(checkIfMediaGroupReadyToSend(post,message,groupsCache.get(mediaGroupId))){
+                            bot.execute(groupsCache.get(mediaGroupId));
+                        }
+                    }
+                }
+                if (message.hasVideo()){
+                    if(message.getMediaGroupId()==null){
+                        SendVideo sendVideo = new SendVideo();
+                        sendVideo.setChatId(chat.getId());
+                        sendVideo.setCaption(message.getCaption());
+                        sendVideo.setCaptionEntities(message.getCaptionEntities());
+                        sendVideo.setVideo(new InputFile(message.getVideo().getFileId()));
+                        bot.execute(sendVideo);
+                    }
+                    else{
+                        String mediaGroupId = message.getMediaGroupId();
+                        InputMediaVideo inputMediaVideo= new InputMediaVideo(message.getVideo().getFileId());
+                        inputMediaVideo.setCaption(message.getCaption());
+                        inputMediaVideo.setCaptionEntities(message.getCaptionEntities());
+                        if(groupsCache.containsKey(message.getMediaGroupId())){
+                            groupsCache.get(mediaGroupId).getMedias().add(inputMediaVideo);
+                        }
+                        else{
+                            SendMediaGroup sendMediaGroup = createSendMediaGroup(chat, inputMediaVideo);
+                            groupsCache.put(mediaGroupId, sendMediaGroup);
+                        }
+                        if(checkIfMediaGroupReadyToSend(post,message,groupsCache.get(mediaGroupId))){
+                            bot.execute(groupsCache.get(mediaGroupId));
+                        }
+                    }
+                }
+                if (message.hasAnimation()){
+                    if(message.getMediaGroupId()==null){
+                        SendAnimation sendAnimation = new SendAnimation();
+                        sendAnimation.setChatId(chat.getId());
+                        sendAnimation.setCaption(message.getCaption());
+                        sendAnimation.setCaptionEntities(message.getCaptionEntities());
+                        sendAnimation.setAnimation(new InputFile(message.getAnimation().getFileId()));
+                        bot.execute(sendAnimation);
+                    }
+                    else{
+                        String mediaGroupId = message.getMediaGroupId();
+                        InputMediaAnimation inputMediaAnimation= new InputMediaAnimation(message.getAnimation().getFileId());
+                        inputMediaAnimation.setCaption(message.getCaption());
+                        inputMediaAnimation.setCaptionEntities(message.getCaptionEntities());
+                        if(groupsCache.containsKey(message.getMediaGroupId())){
+                            groupsCache.get(mediaGroupId).getMedias().add(inputMediaAnimation);
+                        }
+                        else{
+                            SendMediaGroup sendMediaGroup = createSendMediaGroup(chat, inputMediaAnimation);
+                            groupsCache.put(mediaGroupId, sendMediaGroup);
+                        }
+                        if(checkIfMediaGroupReadyToSend(post,message,groupsCache.get(mediaGroupId))){
+                            bot.execute(groupsCache.get(mediaGroupId));
                         }
                     }
                 }
             }
-            for (var audio: post.getAudios()){
-                SendAudio sendAudio = new SendAudio();
-                sendAudio.setChatId(chat.getId());
-                if(post.getCaption().containsKey(audio.getFileId())){
-                    sendAudio.setCaption(post.getCaption().get(audio.getFileId()));
-                }
-                sendAudio.setAudio(new InputFile(audio.getFileId()));
-                try {
-                    bot.execute(sendAudio);
-                } catch (TelegramApiException e){
-                    log.error("Ошибка при отправке аудиотрека");
-                    try {
-                        bot.execute(errorMessage);
-                    } catch (TelegramApiException ex) {
-                        log.info("Ошибка при отправке сообщения об ошибке");
-                    }
-                }
-            }
-            for (var doc: post.getDocs()){
-                SendDocument sendDocument = new SendDocument();
-                sendDocument.setChatId(chat.getId());
-                if(post.getCaption().containsKey(doc.getFileId())){
-                    sendDocument.setCaption(post.getCaption().get(doc.getFileId()));
-                }
-                sendDocument.setDocument(new InputFile(doc.getFileId()));
-                try {
-                    bot.execute(sendDocument);
-                } catch (TelegramApiException e){
-                    log.error("Ошибка при отправке документа");
-                    try {
-                        bot.execute(errorMessage);
-                    } catch (TelegramApiException ex) {
-                        log.info("Ошибка при отправке сообщения об ошибке");
-                    }
-                }
-            }
+
 
             for (var poll : post.getPolls()){
                 SendPoll sendPoll = new SendPoll();
@@ -154,25 +213,6 @@ public class PostSender {
                 }
 
             }
-            for(var video :post.getVideos()){
-                SendVideo sendVideo = new SendVideo();
-                sendVideo.setChatId(chat.getId());
-                if(post.getCaption().containsKey(video.getFileId())){
-                    sendVideo.setCaption(post.getCaption().get(video.getFileId()));
-                }
-                sendVideo.setVideo(new InputFile(video.getFileId()));
-                try {
-                    bot.execute(sendVideo);
-                } catch (TelegramApiException e){
-                    log.error("Ошибка при отправке видео");
-                    try {
-                        bot.execute(errorMessage);
-                    } catch (TelegramApiException ex) {
-                        log.info("Ошибка при отправке сообщения об ошибке");
-                    }
-                }
-            }
-
         }
 
     }
@@ -196,7 +236,22 @@ public class PostSender {
     public void removeTimer(Integer postId){
         timers.remove(postId);
     }
-
+    /*Функция проверят, что все сообщения с одной медиагруппой собраны в объект SendMediaGroup
+    * и что пора ее отправлять*/
+    private boolean checkIfMediaGroupReadyToSend(Post post, Message message, SendMediaGroup sendMediaGroup){
+        int groupSize = post.getMessages().stream().filter(x->x.getMediaGroupId()!=null)
+                .map(x -> x.getMediaGroupId()
+                        .equals(message.getMediaGroupId())).toList().size();
+        return (groupSize==sendMediaGroup.getMedias().size());
+    }
+    private SendMediaGroup createSendMediaGroup(Chat chat,InputMedia inputMedia){
+        SendMediaGroup sendMediaGroup = new SendMediaGroup();
+        sendMediaGroup.setChatId(chat.getId());
+        List<InputMedia> list=new LinkedList<>();
+        list.add(inputMedia);
+        sendMediaGroup.setMedias(list);
+        return sendMediaGroup;
+    }
 
 
 

@@ -37,12 +37,7 @@ public class PostServiceTest {
 
     @Autowired
     private PostRepository postRepository;
-    @Autowired
-    private AudioRepository audioRepository;
-    @Autowired
-    private DocumentRepository documentRepository;
-    @Autowired
-    private PhotoRepository photoRepository;
+
     @Autowired
     private PollRepository pollRepository;
     private User user;

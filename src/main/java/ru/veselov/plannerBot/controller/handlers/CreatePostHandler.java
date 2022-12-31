@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.*;
+import org.telegram.telegrambots.meta.api.objects.games.Animation;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -42,39 +43,47 @@ public class CreatePostHandler implements UpdateHandler {
             log.info("Сохранен текст с разметкой для пользователя {}",userId);
             }
             //TODO сохранение файлов в форме byte[] в базе данных если решим сохранять файлы
-            if(update.getMessage().hasPhoto()){
-                Message message=new Message();
-                //Получаем список из нескольких вариантов картинки разных размеров
-                List<PhotoSize> photoSizes = update.getMessage().getPhoto();
-                PhotoSize photoSize = photoSizes.stream().max(Comparator.comparing(PhotoSize::getFileSize))
+        if(update.getMessage().hasPhoto()){
+            Message message = createMessageWithMedia(update);
+            //Получаем список из нескольких вариантов картинки разных размеров
+            List<PhotoSize> photoSizes = update.getMessage().getPhoto();
+            PhotoSize photoSize = photoSizes.stream().max(Comparator.comparing(PhotoSize::getFileSize))
                         .orElse(null);
-                message.setPhoto(List.of(photoSize));
-                message.setCaption(update.getMessage().getCaption());
-                message.setCaptionEntities(update.getMessage().getCaptionEntities());
-                message.setMediaGroupId(update.getMessage().getMediaGroupId());
-                log.info("Сохранил картинку в пост для юзера {}", userId);
-                userDataCache.getPostCreator(userId).addMessage(message);
-            }
-            if(update.getMessage().hasAudio()){
-                Audio audio = update.getMessage().getAudio();
-                log.info("Сохранил аудиотрек в пост для юзера {}",userId);
-                userDataCache.getPostCreator(userId).addAudio(audio);
-                checkForCaption(update,audio.getFileId(),userId);
-            }
-            if(update.getMessage().hasDocument()){
-                Document document = update.getMessage().getDocument();
-                log.info("Сохранил документ в пост для юзера {}",userId);
-                userDataCache.getPostCreator(userId).addDocument(document);
-                checkForCaption(update,document.getFileId(),userId);
-            }
-            if(update.getMessage().hasVideo()){
-                Video video = update.getMessage().getVideo();
-                log.info("Сохранил видео в пост для юзера {}", userId);
-                userDataCache.getPostCreator(userId).addVideo(video);
-                checkForCaption(update,video.getFileId(),userId);
+            message.setPhoto(List.of(photoSize));
+            log.info("Сохранил картинку в пост для юзера {}", userId);
+            userDataCache.getPostCreator(userId).addMessage(message);
         }
-            if(update.getMessage().hasPoll()){
-                Poll poll = update.getMessage().getPoll();
+        if(update.getMessage().hasAudio()){
+            Message message = createMessageWithMedia(update);
+            Audio audio = update.getMessage().getAudio();
+            message.setAudio(audio);
+            log.info("Сохранил аудиотрек в пост для юзера {}",userId);
+            userDataCache.getPostCreator(userId).addMessage(message);
+        }
+        if(update.getMessage().hasDocument()){
+            Message message = createMessageWithMedia(update);
+            Document document = update.getMessage().getDocument();
+            message.setDocument(document);
+            log.info("Сохранил документ в пост для юзера {}",userId);
+            userDataCache.getPostCreator(userId).addMessage(message);
+        }
+        if(update.getMessage().hasVideo()){
+            Message message = createMessageWithMedia(update);
+            Video video = update.getMessage().getVideo();
+            message.setVideo(video);
+            log.info("Сохранил видео в пост для юзера {}", userId);
+            userDataCache.getPostCreator(userId).addMessage(message);
+        }
+        if(update.getMessage().hasAnimation()){
+            Message message = createMessageWithMedia(update);
+            Animation animation = update.getMessage().getAnimation();
+            message.setAnimation(animation);
+            log.info("Сохранил видео в пост для юзера {}", userId);
+            userDataCache.getPostCreator(userId).addMessage(message);
+        }
+
+        if(update.getMessage().hasPoll()){
+            Poll poll = update.getMessage().getPoll();
                 log.info("Сохранил опрос в пост для юзера {}", userId);
                 userDataCache.getPostCreator(userId).addPoll(poll);
             }
@@ -110,10 +119,12 @@ public class CreatePostHandler implements UpdateHandler {
         return contentQuestion;
     }
 
-
-    private void checkForCaption(Update update, String fileId, Long userId){
-        if(update.getMessage().getCaption()!=null&&!update.getMessage().getCaption().isEmpty()){
-            userDataCache.getPostCreator(userId)
-                    .addCaption(fileId,update.getMessage().getCaption());}
+    private Message createMessageWithMedia(Update update){
+        Message message = new Message();
+        message.setCaption(update.getMessage().getCaption());
+        message.setCaptionEntities(update.getMessage().getCaptionEntities());
+        message.setMediaGroupId(update.getMessage().getMediaGroupId());
+        return message;
     }
+
 }

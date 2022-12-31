@@ -153,27 +153,6 @@ public class PostService {
             postEntity.addMessage(messageDBEntity);
         }
         ////
-        for(var audio: post.getAudios()){
-            AudioEntity audioEntity = new AudioEntity(audio.getFileId(), audio.getFileName());
-            if(post.getCaption().containsKey(audio.getFileId())){
-                audioEntity.setCaption(post.getCaption().get(audio.getFileId()));
-            }
-            postEntity.addAudio(audioEntity);
-        }
-        for(var photo: post.getPhotos()){
-            PhotoEntity photoEntity = new PhotoEntity(photo.getFileId(),photo.getFileSize());
-            if(post.getCaption().containsKey(photo.getFileId())){
-                photoEntity.setCaption(post.getCaption().get(photo.getFileId()));
-            }
-            postEntity.addPhoto(photoEntity);
-        }
-        for (var doc: post.getDocs()){
-            DocEntity docEntity = new DocEntity(doc.getFileId(),doc.getFileName());
-            if(post.getCaption().containsKey(doc.getFileId())){
-                docEntity.setCaption(post.getCaption().get(doc.getFileId()));
-            }
-            postEntity.addDoc(docEntity);
-        }
         for(var chat: post.getChats()){
             addChat(postEntity,chat);
         }
@@ -195,13 +174,6 @@ public class PostService {
             }
             postEntity.addPoll(pollEntity);
         }
-        for (var video :post.getVideos()){
-            VideoEntity videoEntity = new VideoEntity(video.getFileId(), video.getFileName());
-            if(post.getCaption().containsKey(video.getFileId())){
-                videoEntity.setCaption(post.getCaption().get(video.getFileId()));
-            }
-            postEntity.addVideo(videoEntity);
-        }
         postEntity.setDate(post.getDate());
         postEntity.setPostState(post.getPostState());
         return postEntity;
@@ -214,64 +186,15 @@ public class PostService {
         post.setPostId(pe.getPostId());
         post.setDate(pe.getDate());
         post.setMessages(pe.getMessages().stream().map(MessageDBEntity::getMessage).toList());
-
         post.setChats(pe.getChats().stream().map(userService::entityToChat).collect(Collectors.toSet()));
-        for(var a: pe.getAudios()){
-            if(a.getCaption()!=null){
-                post.getCaption().put(entityToAudio(a).getFileId(),a.getCaption());
-            }
-            post.getAudios().add(entityToAudio(a));
-        }
-        for(var d: pe.getDocs()){
-            if(d.getCaption()!=null){
-                post.getCaption().put(entityToDocument(d).getFileId(),d.getCaption());
-            }
-            post.getDocs().add(entityToDocument(d));
-        }
-        for(var p: pe.getPhotos()){
-            if(p.getCaption()!=null){
-                post.getCaption().put(entityToPhotoSize(p).getFileId(),p.getCaption());
-            }
-            post.getPhotos().add(entityToPhotoSize(p));
-        }
-        post.setVideos(pe.getVideos().stream().map(this::entityToVideo).collect(Collectors.toList()));
-        for(var v: pe.getVideos()){
-            if(v.getCaption()!=null){
-                post.getCaption().put(entityToVideo(v).getFileId(),v.getCaption());
-            }
-            post.getVideos().add(entityToVideo(v));
-        }
         post.setPolls(pe.getPolls().stream().map(this::entityToPoll).collect(Collectors.toList()));
         return post;
     }
 
-    private Audio entityToAudio(AudioEntity e){
-        Audio audio = new Audio();
-        audio.setFileId(e.getAudioId());
-        audio.setFileName(e.getName());
-        return audio;
-    }
 
-    private Video entityToVideo(VideoEntity e){
-        Video video = new Video();
-        video.setFileId(e.getVideoId());
-        video.setFileName(e.getName());
-        return video;
-    }
 
-    private Document entityToDocument(DocEntity e){
-        Document document = new Document();
-        document.setFileId(e.getDocId());
-        document.setFileName(e.getDocName());
-        return document;
-    }
 
-    private PhotoSize entityToPhotoSize(PhotoEntity e){
-        PhotoSize photoSize = new PhotoSize();
-        photoSize.setFileId(e.getPhoto_id());
-        photoSize.setFileSize(e.getSize());
-        return photoSize;
-    }
+
     private Poll entityToPoll(PollEntity e){
         Poll poll = new Poll();
         poll.setId(String.valueOf(e.getPollId()));

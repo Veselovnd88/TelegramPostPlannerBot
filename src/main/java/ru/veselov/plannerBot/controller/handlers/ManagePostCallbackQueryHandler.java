@@ -7,6 +7,7 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.controller.UpdateHandler;
@@ -57,7 +58,11 @@ public class ManagePostCallbackQueryHandler implements UpdateHandler {
                 selfChat.setTitle("Пользователь "+userId);
                 selfChat.setId(userId);
                 post.get().setChats(Set.of(selfChat));
-                postSender.send(post.get());
+                try {
+                    postSender.send(post.get());
+                } catch (TelegramApiException e) {
+                    log.error("Произошла ошибка при отправке сообщения {}", e.getMessage());
+                }
                 SendMessage message = new SendMessage(userId.toString(),MessageUtils.SHOW);
                 userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);
                 return utils.removeKeyBoard(message);
