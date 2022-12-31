@@ -3,7 +3,6 @@ package ru.veselov.plannerBot.controller;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -13,8 +12,10 @@ import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.cache.AdminActionsDataCache;
 import ru.veselov.plannerBot.cache.DataCache;
+import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.model.UserEntity;
+import ru.veselov.plannerBot.repository.UserRepository;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.service.UserService;
 
@@ -44,14 +45,17 @@ public class StatusChangingTest {
     UserActions actions = new UserActions();
     public Chat mockChat = spy(Chat.class);
     User user = new User();
-    List mockList;
+    ArrayList<Post> mockList;
+    @Autowired
+    private UserRepository userRepository;
+
     @BeforeEach
     public void init(){
         user.setId(-105L);
         user.setUserName("Vasya");
         user.setFirstName("Zloy");
         user.setLastName("Evil");
-        mockList = Mockito.mock(ArrayList.class);
+        mockList = spy(ArrayList.class);
         /*Если бота убрали из канала, то бот уходит в статус ожидания канала*/
         userDataCache.setUserBotState(user.getId(), BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
         when(bot.getMyId()).thenReturn(1L);
@@ -305,6 +309,8 @@ public class StatusChangingTest {
     void viewTest(){
         //Проверка изменения состояния при нажатии кнопки /view
         userDataCache.setUserBotState(user.getId(),BotState.READY_TO_WORK);
+        when(postService.findByUserAndPostStates(user,List.of(PostState.SAVED,PostState.PLANNED))).thenReturn(mockList);
+        mockList.add(new Post());
         updateController.processUpdate(actions.userPressView(user));
         assertEquals(BotState.VIEW,userDataCache.getUsersBotState(user.getId()));
     }
@@ -318,6 +324,13 @@ public class StatusChangingTest {
                 assertEquals(s,userDataCache.getUsersBotState(user.getId()));
             }
         }
+    }
+    @Test
+    void viewNoPlannedPostsTest(){
+        userDataCache.setUserBotState(user.getId(),BotState.READY_TO_WORK);
+        when(postService.findByUserAndPostStates(user,List.of(PostState.SAVED,PostState.PLANNED))).thenReturn(mockList);
+        updateController.processUpdate(actions.userPressView(user));
+        assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
     }
     @Test
     void promoteTest(){

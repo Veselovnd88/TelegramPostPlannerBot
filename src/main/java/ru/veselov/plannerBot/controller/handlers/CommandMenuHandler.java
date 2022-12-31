@@ -142,6 +142,7 @@ public class CommandMenuHandler implements UpdateHandler {
         List<Post> allPlanned = postService.findByUserAndPostStates(update.getMessage().getFrom(),
                 List.of(PostState.SAVED,PostState.PLANNED));
         if(allPlanned.isEmpty()){
+            userDataCache.setUserBotState(update.getMessage().getFrom().getId(),BotState.READY_TO_WORK);
             return new SendMessage(update.getMessage().getChatId().toString(),NO_PLANNED_POSTS);
         }
         StringBuilder sb = new StringBuilder("Запланированные посты\n");

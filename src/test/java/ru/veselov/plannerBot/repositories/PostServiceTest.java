@@ -174,12 +174,10 @@ public class PostServiceTest {
         postService.planPost(post);
         Assertions.assertEquals(1,postRepository.findAll().size());
         Assertions.assertEquals(2,chatRepository.findAll().size());
-        Assertions.assertEquals(4,textRepository.findAll().size());
         //Просто удаляем юзера, без удаления чата
         userService.removeUser(user);
         Assertions.assertEquals(0,postRepository.findAll().size());
         Assertions.assertEquals(0,chatRepository.findAll().size());
-        Assertions.assertEquals(0,textRepository.findAll().size());
         Assertions.assertEquals(0,audioRepository.findAll().size());
         Assertions.assertEquals(0,pollRepository.findAll().size());
         Assertions.assertEquals(0,photoRepository.findAll().size());
