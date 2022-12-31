@@ -26,10 +26,6 @@ public class PostEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date date;
 
-    @OneToMany(mappedBy = "post",
-        cascade = CascadeType.ALL,
-        orphanRemoval = true)
-    private List<TextEntity> texts=new LinkedList<>();
 
     ////////////
     @OneToMany(mappedBy = "post",
@@ -89,11 +85,6 @@ public class PostEntity {
 
     public void setUser(UserEntity user){
         this.user=user;
-    }
-
-    public void addText(TextEntity te){
-        te.setPost(this);
-        this.texts.add(te);
     }
 
 

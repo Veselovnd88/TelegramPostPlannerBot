@@ -43,13 +43,17 @@ public class CreatePostHandler implements UpdateHandler {
             }
             //TODO сохранение файлов в форме byte[] в базе данных если решим сохранять файлы
             if(update.getMessage().hasPhoto()){
+                Message message=new Message();
                 //Получаем список из нескольких вариантов картинки разных размеров
                 List<PhotoSize> photoSizes = update.getMessage().getPhoto();
                 PhotoSize photoSize = photoSizes.stream().max(Comparator.comparing(PhotoSize::getFileSize))
                         .orElse(null);
+                message.setPhoto(List.of(photoSize));
+                message.setCaption(update.getMessage().getCaption());
+                message.setCaptionEntities(update.getMessage().getCaptionEntities());
+                message.setMediaGroupId(update.getMessage().getMediaGroupId());
                 log.info("Сохранил картинку в пост для юзера {}", userId);
-                userDataCache.getPostCreator(userId).addPhoto(photoSize);
-                checkForCaption(update,photoSize.getFileId(),userId);
+                userDataCache.getPostCreator(userId).addMessage(message);
             }
             if(update.getMessage().hasAudio()){
                 Audio audio = update.getMessage().getAudio();

@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
@@ -32,46 +33,64 @@ public class PostSender {
 
 
     /*TODO предусмотреть помещение постов в очередь если телеграм отдал ошибку 429 (много постов в 1 секунду)*/
-    public void send(Post post){
-
+    public void send(Post post) {
+        Map<String, SendMediaGroup> groupsCache = new HashMap<>();
         for(Chat chat: post.getChats()) {
             String error = MessageUtils.ERROR_MESSAGE;
             SendMessage errorMessage = new SendMessage(chat.getId().toString(), error);
             log.info("Отправляю пост {} в {} в канал {}",post.getPostId(), post.getDate().toString(),
                     chat.getTitle());
-
             for(var message: post.getMessages()){
                 if(message.hasText()){
                     bot.sendMessageBot(SendMessage.builder()
                                     .chatId(chat.getId())
                             .text(message.getText()).entities(message.getEntities()).build());
                 }
+
+
                 if (message.hasPhoto()){
                     if(message.getMediaGroupId()==null){
-
+                        SendPhoto sendPhoto = new SendPhoto();
+                        sendPhoto.setChatId(chat.getId());
+                        sendPhoto.setCaption(message.getCaption());
+                        sendPhoto.setCaptionEntities(message.getCaptionEntities());
+                        sendPhoto.setPhoto(new InputFile(message.getPhoto().get(0).getFileId()));
+                        try {
+                            bot.execute(sendPhoto);
+                        } catch (TelegramApiException e) {
+                            log.error("Ошибка при отправке фото");
+                        }
                     }
-
+                    else{
+                        String mediaGroupId = message.getMediaGroupId();
+                        InputMediaPhoto inputMediaPhoto = new InputMediaPhoto(message.getPhoto().get(0).getFileId());
+                        inputMediaPhoto.setCaption(message.getCaption());
+                        inputMediaPhoto.setCaptionEntities(message.getCaptionEntities());
+                        if(groupsCache.containsKey(message.getMediaGroupId())){
+                            groupsCache.get(mediaGroupId).getMedias().add(inputMediaPhoto);
+                        }
+                        else{
+                            SendMediaGroup sendMediaGroup = new SendMediaGroup();
+                            sendMediaGroup.setChatId(chat.getId());
+                            List<InputMedia> list=new LinkedList<>();
+                            list.add(inputMediaPhoto);
+                            sendMediaGroup.setMedias(list);
+                            groupsCache.put(mediaGroupId, sendMediaGroup);
+                        }
+                        //Проверяем, что все посты из этой группы выбраны, и если да - отправляем группу
+                        int groupSize = post.getMessages().stream().filter(x->x.getMediaGroupId()!=null)
+                                .map(x -> x.getMediaGroupId()
+                                .equals(message.getMediaGroupId())).toList().size();
+                        if(groupSize==groupsCache.get(mediaGroupId).getMedias().size()){
+                            try {
+                                bot.execute(groupsCache.get(mediaGroupId));
+                            } catch (TelegramApiException e) {
+                                log.error("Ошибка при отправке"); //FIXME exception to mehtod signature
+                            }
+                        }
+                    }
                 }
             }
-            for (var photo : post.getPhotos()) {
-                SendPhoto sendPhoto = new SendPhoto();
-                sendPhoto.setChatId(chat.getId());
-                if(post.getCaption().containsKey(photo.getFileId())){
-                    sendPhoto.setCaption(post.getCaption().get(photo.getFileId()));
-                }
-                sendPhoto.setPhoto(new InputFile(photo.getFileId()));
-                try {
-                    bot.execute(sendPhoto);
-                } catch (TelegramApiException e) {
-                    log.error("Ошибка при отправке картинки");
-                    try {
-                        bot.execute(errorMessage);
-                    } catch (TelegramApiException ex) {
-                        log.info("Ошибка при отправке сообщения об ошибке");
-                    }
-                }
-            }
-
             for (var audio: post.getAudios()){
                 SendAudio sendAudio = new SendAudio();
                 sendAudio.setChatId(chat.getId());
@@ -179,13 +198,6 @@ public class PostSender {
     }
 
 
-    private SendMediaGroup groupEntities(List<InputMedia> medias){
-        return SendMediaGroup.builder().medias(medias).build();
-        //TODO при формировании поста проверять как были отправлены фотографии - отдельно или в медиагруппе
-        //Если отдельно то ставим у ентити поле в 0, и сохраняем, как сохраняли
-        //если есть mediagroup - то к фотографии сохраняем Id группы
-        //Далее - получаем весь список картинок и формируем linkedLisT по группам c медиагрупп
-        //для каждой такой группы сроздается объект сендмедиа групп
-    }
+
 
 }
