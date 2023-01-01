@@ -34,11 +34,6 @@ public class PostEntity {
 
     ///////////
 
-    @OneToMany(mappedBy = "post",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
-    private List<PollEntity> polls= new LinkedList<>();
-
     @Enumerated(EnumType.STRING)
     PostState postState=PostState.CREATED;
 
@@ -73,8 +68,4 @@ public class PostEntity {
         this.messages.add(messageDB);
     }
     ////////////
-    public void addPoll(PollEntity poll) {
-        poll.setPost(this);
-        polls.add(poll);
-    }
 }

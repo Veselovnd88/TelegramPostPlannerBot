@@ -9,12 +9,12 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.media.*;
+import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.service.PostService;
-import ru.veselov.plannerBot.utils.MessageUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,8 +35,6 @@ public class PostSender {
     public void send(Post post) throws TelegramApiException {
         Map<String, SendMediaGroup> groupsCache = new HashMap<>();
         for(Chat chat: post.getChats()) {
-            String error = MessageUtils.ERROR_MESSAGE;
-            SendMessage errorMessage = new SendMessage(chat.getId().toString(), error);
             log.info("Отправляю пост {} в {} в канал {}",post.getPostId(), post.getDate().toString(),
                     chat.getTitle());
             for(var message: post.getMessages()){
@@ -49,7 +47,6 @@ public class PostSender {
                     if(message.getMediaGroupId()==null){
                         SendPhoto sendPhoto = new SendPhoto();
                         sendPhoto.setChatId(chat.getId());
-                        //sendPhoto.setParseMode();
                         sendPhoto.setCaption(message.getCaption());
                         sendPhoto.setCaptionEntities(message.getCaptionEntities());
                         sendPhoto.setPhoto(new InputFile(message.getPhoto().get(0).getFileId()));
@@ -178,37 +175,27 @@ public class PostSender {
                         }
                     }
                 }
-            }
-
-
-            for (var poll : post.getPolls()){
-                SendPoll sendPoll = new SendPoll();
-                sendPoll.setChatId(chat.getId());
-                sendPoll.setQuestion(poll.getQuestion());
-                sendPoll.setAllowMultipleAnswers(poll.getAllowMultipleAnswers());
-                sendPoll.setType(poll.getType());
-                if(poll.getType().equalsIgnoreCase("quiz")){
-                    sendPoll.setExplanation(poll.getExplanation());
-                    sendPoll.setExplanationEntities(poll.getExplanationEntities());
-                }
-                sendPoll.setIsAnonymous(poll.getIsAnonymous());
-                sendPoll.setOptions(poll.getOptions().stream().map(PollOption::getText).collect(Collectors.toList()));
-                sendPoll.setCorrectOptionId(poll.getCorrectOptionId());
-                try {
-                    bot.execute(sendPoll);
-                } catch (TelegramApiException e){
-                    e.printStackTrace();
-                    log.error("Ошибка при отправке опроса");
-                    try {
-                        bot.execute(errorMessage);
-                    } catch (TelegramApiException ex) {
-                        log.info("Ошибка при отправке сообщения об ошибке");
+                if (message.hasPoll()){
+                    Poll poll = message.getPoll();
+                    SendPoll sendPoll = new SendPoll();
+                    sendPoll.setChatId(chat.getId());
+                    sendPoll.setQuestion(poll.getQuestion());
+                    sendPoll.setAllowMultipleAnswers(poll.getAllowMultipleAnswers());
+                    sendPoll.setType(poll.getType());
+                    if(poll.getType().equalsIgnoreCase("quiz")){
+                        sendPoll.setExplanation(poll.getExplanation());
+                        sendPoll.setExplanationEntities(poll.getExplanationEntities());
                     }
+                    sendPoll.setIsAnonymous(poll.getIsAnonymous());
+                    sendPoll.setOptions(poll.getOptions().stream().map(PollOption::getText).collect(Collectors.toList()));
+                    sendPoll.setCorrectOptionId(poll.getCorrectOptionId());
+                    sendPoll.setIsClosed(poll.getIsClosed());
+                    sendPoll.setCloseDate(poll.getCloseDate());
+                    sendPoll.setOpenPeriod(poll.getOpenPeriod());
+                    bot.execute(sendPoll);
                 }
-
             }
         }
-
     }
 
     /*Создается объект таймера и помещается в кеш, на тот случай, если пользоватеть отправил пост в канал

@@ -4,14 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.telegram.telegrambots.meta.api.objects.*;
-import org.telegram.telegrambots.meta.api.objects.polls.Poll;
-import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
+import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.User;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostEntity;
 import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.model.UserEntity;
-import ru.veselov.plannerBot.model.content.*;
+import ru.veselov.plannerBot.model.content.ChatEntity;
+import ru.veselov.plannerBot.model.content.MessageDBEntity;
 import ru.veselov.plannerBot.repository.ChatRepository;
 import ru.veselov.plannerBot.repository.PostRepository;
 import ru.veselov.plannerBot.repository.UserRepository;
@@ -142,7 +143,7 @@ public class PostService {
         return postRepository.existsByPostId(id);
     }
 ////////////////////////////////Конвертеры/////////////////////
-    private PostEntity convertToEntity(Post post){
+ private PostEntity convertToEntity(Post post){
         PostEntity postEntity = new PostEntity();
         if(post.getPostId()!=0){
             postEntity.setPostId(post.getPostId());}
@@ -155,24 +156,6 @@ public class PostService {
         ////
         for(var chat: post.getChats()){
             addChat(postEntity,chat);
-        }
-        for (var poll: post.getPolls()){
-            PollEntity pollEntity = new PollEntity();
-            pollEntity.setQuestion(poll.getQuestion());
-            pollEntity.setMultipleAnswer(poll.getAllowMultipleAnswers());
-            List<PollOption> options = poll.getOptions();
-            pollEntity.setPollOptions(options.stream().map(PollOption::getText).collect(Collectors.toList()));
-            pollEntity.setAnonymous(poll.getIsAnonymous());
-            pollEntity.setType(poll.getType());
-            if(poll.getType().equalsIgnoreCase("quiz")){
-                pollEntity.setExplanation(poll.getExplanation()==null?"":poll.getExplanation());
-                List<MessageEntity> explanationEntities = poll.getExplanationEntities()==null?Collections.emptyList()
-                        :poll.getExplanationEntities();
-                pollEntity.setExplTexts(explanationEntities.stream().map(MessageEntity::getText)
-                        .collect(Collectors.toList()));
-                pollEntity.setCorrectOptionId(poll.getCorrectOptionId());
-            }
-            postEntity.addPoll(pollEntity);
         }
         postEntity.setDate(post.getDate());
         postEntity.setPostState(post.getPostState());
@@ -187,42 +170,6 @@ public class PostService {
         post.setDate(pe.getDate());
         post.setMessages(pe.getMessages().stream().map(MessageDBEntity::getMessage).toList());
         post.setChats(pe.getChats().stream().map(userService::entityToChat).collect(Collectors.toSet()));
-        post.setPolls(pe.getPolls().stream().map(this::entityToPoll).collect(Collectors.toList()));
         return post;
     }
-
-
-
-
-
-    private Poll entityToPoll(PollEntity e){
-        Poll poll = new Poll();
-        poll.setId(String.valueOf(e.getPollId()));
-        poll.setQuestion(e.getQuestion());
-        poll.setAllowMultipleAnswers(e.isMultipleAnswer());
-        List<String> options = e.getPollOptions();
-        poll.setOptions(options.stream().map(
-                x->{
-                    PollOption po = new PollOption();
-                    po.setText(x);
-                    return po;
-                }
-        ).collect(Collectors.toList()));
-        poll.setIsAnonymous(e.isAnonymous());
-        poll.setType(e.getType());
-        if(e.getType().equalsIgnoreCase("quiz")){
-            poll.setExplanation(e.getExplanation());
-            poll.setExplanationEntities(e.getExplTexts().stream().map(
-                    x->{
-                        MessageEntity me = new MessageEntity();
-                        me.setText(x);
-                        return me;
-                    }
-            ).collect(Collectors.toList()));
-            poll.setCorrectOptionId(e.getCorrectOptionId()==null?0:e.getCorrectOptionId());
-        }
-        return poll;
-    }
-
-
 }

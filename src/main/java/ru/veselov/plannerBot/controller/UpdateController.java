@@ -113,7 +113,7 @@ public class UpdateController implements UpdateHandler {
            if(botState!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
               return callBackQueriesHandler.processUpdate(update);}
         }
-        return null;//TODO неизвестная команда
+        return null;
     }
 
     private boolean isCommand(Update update) {

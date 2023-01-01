@@ -38,8 +38,6 @@ public class PostServiceTest {
     @Autowired
     private PostRepository postRepository;
 
-    @Autowired
-    private PollRepository pollRepository;
     private User user;
     private UserEntity userEntity;
     private Post post;
@@ -173,7 +171,5 @@ public class PostServiceTest {
         userService.removeUser(user);
         Assertions.assertEquals(0,postRepository.findAll().size());
         Assertions.assertEquals(0,chatRepository.findAll().size());
-        Assertions.assertEquals(0,pollRepository.findAll().size());
-
     }
 }

@@ -101,9 +101,12 @@ public class CreatePostHandler implements UpdateHandler {
         }
 
         if(update.getMessage().hasPoll()){
+            Message message = new Message();
             Poll poll = update.getMessage().getPoll();
-                log.info("Сохранил опрос в пост для юзера {}", userId);
-                userDataCache.getPostCreator(userId).addPoll(poll);
+            message.setPoll(poll);
+            log.info("Сохранил опрос в пост для юзера {}", userId);
+            userDataCache.getPostCreator(userId).addMessage(message);
+            //userDataCache.getPostCreator(userId).addPoll(poll);
             }
             return askAddContent(update);
      }
