@@ -8,24 +8,19 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 
-public interface DataCache {//FIXME разбить на разные кеши
+public interface DataCache extends Cache {
     void setUserBotState(Long userId,BotState botState);
     BotState getUsersBotState(Long userId);
     PostCreator createPostCreator(User user);
     PostCreator getPostCreator(Long userId);
     Map<Long,PostCreator> getPostCreators();
-    void removePostCreator(Long userId);
     void saveToRepository(Long userId);
 
     void addPostForManage(Long userId, Integer num);
     void removePostForManage(Long userId);
     Integer getPostForManage(Long userId);
 
-    public Map<Long, Calendar> getSavedDate();
-    public Map<Long, Date> getStartedDate();
-
-    public User getPromoteUser();
-    public void setPromoteUser(User user);
-
+    Map<Long, Calendar> getSavedDate();
+    Map<Long, Date> getStartedDate();
 
 }

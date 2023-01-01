@@ -21,7 +21,7 @@ public class UserDataCache implements DataCache {
 
     private final PostService postService;
 
-    private final Map<Long, PostCreator> postCreators = new HashMap<>();
+    private final Map<Long, PostCreator> postCreators = new HashMap<>();//FIXME заменить просто на Long, Post , кажется одно и то же
     private final Map<Long, BotState> botStates = new HashMap<>();
 
     private final Map<Long,Integer> postForManage = new HashMap<>();
@@ -36,16 +36,6 @@ public class UserDataCache implements DataCache {
 
     private final Map<Long, Calendar> savedDate = new HashMap<>();
     private final Map<Long, Date> startedDate = new HashMap<>();
-
-    public User getPromoteUser() {
-        return promoteUser;
-    }
-
-    public void setPromoteUser(User promoteUser) {
-        this.promoteUser = promoteUser;
-    }
-
-    private User promoteUser;
 
     @Autowired
     public UserDataCache(PostService postService) {
@@ -85,10 +75,6 @@ public class UserDataCache implements DataCache {
         return postCreators;
     }
 
-    @Override
-    public void removePostCreator(Long userId) {
-        postCreators.remove(userId);
-    }
 
     @Override
     public void saveToRepository(Long userId) {
@@ -96,8 +82,7 @@ public class UserDataCache implements DataCache {
         post.setPostState(PostState.CREATED);
         postService.planPost(post);
         setUserBotState(userId,BotState.READY_TO_WORK);
-        log.info("Установлен статус бота READY_TO_WORK для {}", userId);
-        removePostCreator(userId);
+        clear(userId);
     }
 
     public void addPostForManage(Long userId, Integer num){
@@ -108,5 +93,13 @@ public class UserDataCache implements DataCache {
     }
     public Integer getPostForManage(Long userId){
         return postForManage.get(userId);
+    }
+
+    @Override
+    public void clear(Long id) {
+        savedDate.remove(id);
+        startedDate.remove(id);
+        postCreators.remove(id);
+        postForManage.remove(id);
     }
 }

@@ -126,7 +126,7 @@ public class CommandMenuHandler implements UpdateHandler {
 
     private SendMessage reset(Update update){
         Long userId = update.getMessage().getFrom().getId();
-        userDataCache.removePostCreator(userId);//FIXME удалить другие кеши
+        userDataCache.clear(userId);
         BotState botState = userDataCache.getUsersBotState(userId);
         if(botState!=BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL){
             if(botState==BotState.PROMOTE_USER){

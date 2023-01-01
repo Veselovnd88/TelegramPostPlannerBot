@@ -32,8 +32,9 @@ public class PromoteUserCallbackHandler implements UpdateHandler {
     @Override
     public BotApiMethod<?> processUpdate(Update update) {
         String data = update.getCallbackQuery().getData();
+        Long userId=update.getCallbackQuery().getFrom().getId();
         Optional<UserEntity> userById = userService.findUserById(
-                adminActionsDataCache.getPromoteUser(update.getCallbackQuery().getFrom().getId())
+                adminActionsDataCache.getPromoteUser(userId)
         );
         if(userById.isPresent()){
             UserEntity userEntity = userById.get();
@@ -50,13 +51,15 @@ public class PromoteUserCallbackHandler implements UpdateHandler {
             }
             userService.saveUser(userEntity);
             log.info("Изменен статус пользователя {}", userEntity.getUserId());
-            userDataCache.setUserBotState(update.getCallbackQuery().getFrom().getId(),
-                    adminActionsDataCache.getStartBotState(update.getCallbackQuery().getFrom().getId()));
+            userDataCache.setUserBotState(userId,
+                    adminActionsDataCache.getStartBotState(userId));
+            adminActionsDataCache.clear(userId);
             return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
                     .text("Статус успешно обновлен на "+ userEntity.getStatus()).build();
         }
-        userDataCache.setUserBotState(update.getCallbackQuery().getFrom().getId(),
-                adminActionsDataCache.getStartBotState(update.getCallbackQuery().getFrom().getId()));
+        userDataCache.setUserBotState(userId,
+                adminActionsDataCache.getStartBotState(userId));
+        adminActionsDataCache.clear(userId);
         return AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId())
                 .text("Такого пользователя нет в базе").build();
     }

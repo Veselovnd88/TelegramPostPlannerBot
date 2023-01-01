@@ -32,4 +32,9 @@ public class AdminActionsDataCacheImpl implements AdminActionsDataCache {
     public void setPromoteUser(Long userId, User user) {
         promoteUser.put(userId,user);
     }
+
+    @Override
+    public void clear(Long id) {
+        promoteUser.remove(id);
+    }
 }

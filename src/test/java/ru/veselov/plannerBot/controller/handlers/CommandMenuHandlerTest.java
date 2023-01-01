@@ -118,7 +118,7 @@ class CommandMenuHandlerTest {
     void testResetCommand(){
         when(mockMessage.getText()).thenReturn("/reset");
         assertEquals(RESET_POSTS,commandMenuHandler.processUpdate(mockUpdate).getText());
-        verify(userDataCache, times(1)).removePostCreator(1L);
+        verify(userDataCache, times(1)).clear(1L);
 
     }
 

@@ -34,7 +34,6 @@ public class BotChatMemberActionsHandler implements UpdateHandler {
 
     @Override
     public BotApiMethod<?> processUpdate(Update update) {
-            //FIXME очистка кеша, т.к. предыдущая команда была прервана
             if((update.getMyChatMember().getNewChatMember().getUser().getId())//бота присоединили к каналу
                     .equals(bot.getMyId())){
                 User user = update.getMyChatMember().getFrom();
@@ -46,7 +45,7 @@ public class BotChatMemberActionsHandler implements UpdateHandler {
                     userService.save(chat,user);
                     userDataCache.setUserBotState(userId, BotState.READY_TO_WORK);
                     log.info("Бот добавлен в канал {} пользователя {}", chat.getTitle(), userId);
-                    //FIXME статус изменился - чистим кеши
+                    userDataCache.clear(userId);
                     return utils.removeKeyBoard(SendMessage.builder().chatId(userId)
                             .text("Вы присоединили меня к каналу "+chat.getTitle()).build());
                 }
@@ -60,7 +59,7 @@ public class BotChatMemberActionsHandler implements UpdateHandler {
                     Map<Long,Integer> ids = userService.findUsersWithChat(chat.getId().toString());
                     //Пишет каждому пользователю, что бота удалили с канала
                     for(var pair : ids.entrySet() ){
-                        //FIXME - статус изменился, чистим кеши
+                        userDataCache.clear(pair.getKey());
                         if(pair.getValue()==1){
                             userDataCache.setUserBotState(pair.getKey(), BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
                             log.info("Статус переключен на Ожидание канала для {}",
@@ -79,7 +78,6 @@ public class BotChatMemberActionsHandler implements UpdateHandler {
                         userService.removeChat(chat.getId().toString());
                         return utils.removeKeyBoard(SendMessage.builder().chatId(pair.getKey())
                                 .text(message).build());
-
                     }
                 }
                 log.info("Что то другое произошло со статусом бота {}",update.getMyChatMember());
