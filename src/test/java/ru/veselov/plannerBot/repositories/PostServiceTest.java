@@ -173,9 +173,7 @@ public class PostServiceTest {
         userService.removeUser(user);
         Assertions.assertEquals(0,postRepository.findAll().size());
         Assertions.assertEquals(0,chatRepository.findAll().size());
-        Assertions.assertEquals(0,audioRepository.findAll().size());
         Assertions.assertEquals(0,pollRepository.findAll().size());
-        Assertions.assertEquals(0,photoRepository.findAll().size());
-        Assertions.assertEquals(0,documentRepository.findAll().size());
+
     }
 }

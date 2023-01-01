@@ -62,6 +62,8 @@ public class ManagePostCallbackQueryHandler implements UpdateHandler {
                     postSender.send(post.get());
                 } catch (TelegramApiException e) {
                     log.error("Произошла ошибка при отправке сообщения {}", e.getMessage());
+                    return utils.removeKeyBoard(SendMessage.builder().chatId(userId)
+                            .text(MessageUtils.ERROR_MESSAGE).build());
                 }
                 SendMessage message = new SendMessage(userId.toString(),MessageUtils.SHOW);
                 userDataCache.setUserBotState(userId,BotState.READY_TO_WORK);

@@ -38,7 +38,6 @@ public class MessageUtils {
 
     public static String AWAITING_DATE = EmojiParser.parseToUnicode(":date:Добавляем данные в пост, выберите дату с помощью кнопок и кликните на клавишу Даты/времени" +
             " или введите дату в формате dd.MM.yyyy HH mm");
-    public static List<String> AVAILABLE_DATA_FORMATS = List.of("dd.MM.yyyy HH mm");
     public static String POST_SAVED = EmojiParser.parseToUnicode(":white_check_mark:Ваш пост сохранен");
 
     public static String UNKNOWN_COMMAND=EmojiParser.parseToUnicode(":exclamation:Неизвестная команда");
@@ -48,6 +47,10 @@ public class MessageUtils {
     public static String NO_PLANNED_POSTS=EmojiParser.parseToUnicode("Запланированных постов нет");
     public static String ANOTHER_ACTION_IN_PROCESS="Закончите предыдущее действие, или нажмите /reset";
     public static String FORWARD_MESSAGE = "Перешлите сообщение пользователя, у которого будем менять статус";
+    public static String CAPTION_TOO_LONG="Текст подписи превышает длину 1024 символа, сократите размер подписи," +
+            " или отправьте текст отдельно";
+    public static String CANT_GET_PICTURE="Не удалось сохранить изображение";
+    public static String NO_CUSTOM_EMOJI="Я не поддерживаю кастомные эмодзи";
     public static String shortenString(String title){
         if(title.length()>15){
             return title.substring(0, 7) +"..."+ title.substring(title.length()-7);

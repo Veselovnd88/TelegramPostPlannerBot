@@ -3,13 +3,11 @@ package ru.veselov.plannerBot.service.postsender;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.media.*;
 import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -55,11 +53,7 @@ public class PostSender {
                         sendPhoto.setCaption(message.getCaption());
                         sendPhoto.setCaptionEntities(message.getCaptionEntities());
                         sendPhoto.setPhoto(new InputFile(message.getPhoto().get(0).getFileId()));
-                        try {
-                            bot.execute(sendPhoto);
-                        } catch (TelegramApiException e) {
-                            log.error("Ошибка при отправке фото");
-                        }
+                        bot.execute(sendPhoto);
                     }
                     else{
                         String mediaGroupId = message.getMediaGroupId();
@@ -236,7 +230,7 @@ public class PostSender {
     public void removeTimer(Integer postId){
         timers.remove(postId);
     }
-    /*Функция проверят, что все сообщения с одной медиагруппой собраны в объект SendMediaGroup
+    /*Функция проверяет, что все сообщения с одной медиагруппой собраны в объект SendMediaGroup
     * и что пора ее отправлять*/
     private boolean checkIfMediaGroupReadyToSend(Post post, Message message, SendMediaGroup sendMediaGroup){
         int groupSize = post.getMessages().stream().filter(x->x.getMediaGroupId()!=null)

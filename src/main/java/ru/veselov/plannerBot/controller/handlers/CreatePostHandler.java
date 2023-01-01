@@ -33,6 +33,21 @@ public class CreatePostHandler implements UpdateHandler {
 
     public SendMessage processUpdate(Update update){
         Long userId=update.getMessage().getFrom().getId();
+        //Проверка на длину подписи (caption) бот не может отправлять сообщение длинней 1024 символов
+        if(update.getMessage().getCaption()!=null){
+            if(update.getMessage().getCaption().length()>1024){
+                return SendMessage.builder().chatId(userId)
+                        .text(MessageUtils.CAPTION_TOO_LONG).build();
+            }
+        }
+        //Проверка на кастомные эмодзи
+        if(update.getMessage().getEntities()!=null){
+            List<MessageEntity> entities = update.getMessage().getEntities();
+            if(entities.stream().anyMatch(x->x.getType().equals("custom_emoji"))){
+                return SendMessage.builder().chatId(userId)
+                        .text(MessageUtils.NO_CUSTOM_EMOJI).build();
+            }
+        }
         //Сохранение текста с параметрами форматирования
         if(update.getMessage().hasText()){
             Message message = new Message();
@@ -49,6 +64,9 @@ public class CreatePostHandler implements UpdateHandler {
             List<PhotoSize> photoSizes = update.getMessage().getPhoto();
             PhotoSize photoSize = photoSizes.stream().max(Comparator.comparing(PhotoSize::getFileSize))
                         .orElse(null);
+            if(photoSize==null){
+                return SendMessage.builder().chatId(userId).text(MessageUtils.CANT_GET_PICTURE).build();
+            }
             message.setPhoto(List.of(photoSize));
             log.info("Сохранил картинку в пост для юзера {}", userId);
             userDataCache.getPostCreator(userId).addMessage(message);
