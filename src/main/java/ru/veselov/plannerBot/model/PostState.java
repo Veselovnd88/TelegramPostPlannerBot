@@ -4,5 +4,6 @@ public enum PostState {
     CREATED,
     SAVED,
     PLANNED,
-    SENT
+    SENT,
+    DELETED
 }

@@ -17,7 +17,6 @@ import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.service.PostService;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
@@ -26,14 +25,26 @@ public class PostSender {
     private final MyPreciousBot bot;
 
     private final Map<Integer, Timer> timers=new HashMap<>();
+
+    private final Map<Chat, Date> chatTimers = new HashMap<>();
+
     @Autowired
     public PostSender(MyPreciousBot bot) {
         this.bot = bot;
     }
 
     public void send(Post post) throws TelegramApiException {
+        //TODO отправка от двух разных пользователей в один чат
+
         Map<String, SendMediaGroup> groupsCache = new HashMap<>();
         for(Chat chat: post.getChats()) {
+            if(chatTimers.containsKey(chat)){
+                Date date = new Date(new Date().getTime()+80000);//если до текущей даты + 80 секунд
+                if(chatTimers.get(chat).before(date)){
+
+                }
+            }
+            chatTimers.put(chat,new Date());
             log.info("Отправляю пост {} в {} в канал {}",post.getPostId(), post.getDate().toString(),
                     chat.getTitle());
             for(var message: post.getMessages()){

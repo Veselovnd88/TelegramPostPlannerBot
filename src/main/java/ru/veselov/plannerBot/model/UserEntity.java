@@ -32,7 +32,7 @@ public class UserEntity {
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private UserStatus status=UserStatus.STANDARD;
-
+    //TODO один чат должен быть только у одного юзера, сделать такое ограничение
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE,CascadeType.REFRESH})
     @JoinTable(
             name = "user_chat",

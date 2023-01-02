@@ -100,11 +100,12 @@ public class UserService {
                         Set<PostEntity> posts = Set.copyOf(chatEntity.getPosts());
                         for(PostEntity post: posts){
                             post.removeChat(chatEntity);
-                            if(post.getChats().isEmpty()){//если чатов не осталось, то ставим статус saved и сохраняем
-                                post.setPostState(PostState.SAVED);
-                                log.info("Пост {} пользователя {} сейчас сохранен в бд со статусом Saved," +
+                            if(post.getChats().isEmpty()){//если чатов не осталось, то ставим статус Deleted и сохраняем
+                                post.setPostState(PostState.DELETED);//FIXME также нужно проверить что удалили таймеры
+                                log.info("Пост {} пользователя {} сейчас сохранен в бд со статусом Deleted," +
                                                 " без связи с пользователем",
                                         post.getPostId(),userEntity.getUserId());
+                                //FIXME postSender.removeTimer()
                                 postRepository.save(post);
                             }
                         }
