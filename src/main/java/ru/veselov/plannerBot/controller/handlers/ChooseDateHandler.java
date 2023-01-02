@@ -229,7 +229,7 @@ public class ChooseDateHandler implements UpdateHandler {
 
     private SendMessage savePostAfterInputDate(String chatId, Date date, Long userId){
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH mm");
-        userDataCache.getPostCreator(userId).getPost().setDate(date);
+        userDataCache.getPost(userId).setDate(date);
         log.info("Установлена дата поста {} для пользователя {}", date.toString(), userId);
         userDataCache.setUserBotState(userId, BotState.READY_TO_SAVE);
         SendMessage saveQuestion = new SendMessage();

@@ -58,14 +58,14 @@ public class SchedulingService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeZone(tz);
         calendar.add(Calendar.DATE,-1);
-        Map<Long, PostCreator> postCreators = userDataCache.getPostCreators();
+        Map<Long, Post> postCache = userDataCache.getPostCache();
         List<Long> toRemove = new ArrayList<>();
-            for(var pair: postCreators.entrySet()){
-                if(pair.getValue().getCreationDate().before(calendar.getTime())){
+            for(var pair: postCache.entrySet()){
+                if(pair.getValue().getDate().before(calendar.getTime())){
                     toRemove.add(pair.getKey());
                 }
             }
-        toRemove.forEach(postCreators::remove);
+        toRemove.forEach(postCache::remove);
         toRemove.forEach(x->
                 userDataCache.setUserBotState(x,BotState.READY_TO_WORK));
     }

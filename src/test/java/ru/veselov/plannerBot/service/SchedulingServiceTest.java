@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.veselov.plannerBot.cache.DataCache;
 import ru.veselov.plannerBot.bots.BotState;
+import ru.veselov.plannerBot.model.Post;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -26,20 +27,20 @@ class SchedulingServiceTest {
         user.setId(1111L);
         User user2 = new User();
         user2.setId(2222L);
-        dataCache.createPostCreator(user);
-        dataCache.createPostCreator(user2);
-        assertEquals(2,dataCache.getPostCreators().size());
+        dataCache.createPost(user);
+        dataCache.createPost(user2);
+        assertEquals(2,dataCache.getPostCache().size());
         dataCache.setUserBotState(user.getId(),BotState.AWAITING_POST);
         dataCache.setUserBotState(user2.getId(),BotState.AWAITING_POST);
-        PostCreator postCreator = dataCache.getPostCreator(user.getId());
+        Post post = dataCache.getPost(user.getId());
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH mm");
         try {
-            postCreator.setCreationDate(sdf.parse("03.12.2022 15 20"));
+            post.setDate(sdf.parse("03.12.2022 15 20"));
         } catch (ParseException ignored) {
 
         }
         service.checkPostCreators();
-        Assertions.assertEquals(1,dataCache.getPostCreators().size());
+        Assertions.assertEquals(1,dataCache.getPostCache().size());
         assertEquals(BotState.READY_TO_WORK,dataCache.getUsersBotState(user.getId()));
         assertEquals(BotState.AWAITING_POST,dataCache.getUsersBotState(user2.getId()));
     }

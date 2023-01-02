@@ -7,7 +7,6 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostState;
-import ru.veselov.plannerBot.service.PostCreator;
 import ru.veselov.plannerBot.service.PostService;
 
 import java.util.Calendar;
@@ -18,10 +17,9 @@ import java.util.Map;
 @Component
 @Slf4j
 public class UserDataCache implements DataCache {
-
     private final PostService postService;
 
-    private final Map<Long, PostCreator> postCreators = new HashMap<>();//FIXME заменить просто на Long, Post , кажется одно и то же
+    private final Map<Long, Post> postCache = new HashMap<>();
     private final Map<Long, BotState> botStates = new HashMap<>();
 
     private final Map<Long,Integer> postForManage = new HashMap<>();
@@ -58,27 +56,23 @@ public class UserDataCache implements DataCache {
     }
 
     @Override
-    public PostCreator createPostCreator(User user) {
-        PostCreator postCreator = new PostCreator(user);
-        log.info("Создается новый PostCreator для {}",user.getId());
-        postCreators.put(user.getId(), postCreator);
-        return postCreator;
+    public Post createPost(User user){
+        log.info("Создан и добавлен в кеш пост для {}", user.getId());
+        Post post = new Post(user);
+        postCache.put(user.getId(), post);
+        return post;
     }
-
     @Override
-    public PostCreator getPostCreator(Long userId) {
-        return postCreators.get(userId);
+    public Post getPost(Long userId){
+        return postCache.get(userId);
     }
-
     @Override
-    public Map<Long, PostCreator> getPostCreators() {
-        return postCreators;
+    public Map<Long, Post> getPostCache(){
+        return postCache;
     }
-
-
     @Override
     public void saveToRepository(Long userId) {
-        Post post = postCreators.get(userId).getPost();
+        Post post = postCache.get(userId);
         post.setPostState(PostState.CREATED);
         postService.planPost(post);
         setUserBotState(userId,BotState.READY_TO_WORK);
@@ -99,7 +93,7 @@ public class UserDataCache implements DataCache {
     public void clear(Long id) {
         savedDate.remove(id);
         startedDate.remove(id);
-        postCreators.remove(id);
+        postCache.remove(id);
         postForManage.remove(id);
     }
 }

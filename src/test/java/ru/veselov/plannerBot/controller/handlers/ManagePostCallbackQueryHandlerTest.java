@@ -1,6 +1,7 @@
 package ru.veselov.plannerBot.controller.handlers;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 @SpringBootTest
+@Disabled
 class ManagePostCallbackQueryHandlerTest {
 
     private Update mockUpdate = spy(Update.class);

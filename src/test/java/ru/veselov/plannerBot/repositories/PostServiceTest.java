@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.model.PostEntity;
@@ -44,6 +45,7 @@ public class PostServiceTest {
     private Chat chat1;
     private Chat chat2;
     private SimpleDateFormat sdf;
+    private Message message;
     @Autowired
     private UserService userService;
     @BeforeEach
@@ -73,6 +75,8 @@ public class PostServiceTest {
         post.setUser(user);
         post.setDate(new Date());
         post.setChats(Set.of(chat1));
+        message = new Message();
+        message.setText("Text");
     }
 
     @Test
@@ -81,7 +85,7 @@ public class PostServiceTest {
         PostState postState = PostState.CREATED;
         Date postDateActual = sdf.parse("05.12.2022 17 25");
         //----------------------------------------//
-        post.setTexts(List.of("text"));
+        post.setMessages(List.of(message));
         post.setPostState(postState);
         post.setDate(postDateActual);
         postService.planPost(post);
@@ -98,8 +102,8 @@ public class PostServiceTest {
     void planPostSave() throws ParseException {
         PostState postState = PostState.CREATED;
         Date postDateSaved = sdf.parse("05.12.2023 17 25");//через год
-        //----------------------------------------//
-        post.setTexts(List.of("text"));
+        //----------------------------------------/
+        post.setMessages(List.of(message));
         post.setPostState(postState);
         post.setDate(postDateSaved);
         postService.planPost(post);
@@ -116,7 +120,7 @@ public class PostServiceTest {
         PostState postState = PostState.SAVED;
         Date postDatePlanned = sdf.parse("05.12.2022 17 25");//через год
         //----------------------------------------//
-        post.setTexts(List.of("text"));
+        post.setMessages(List.of(message));
         post.setPostState(postState);
         post.setDate(postDatePlanned);
         postService.planPost(post);
@@ -133,7 +137,7 @@ public class PostServiceTest {
         PostState postState = PostState.SAVED;
         Date postDatePlanned = sdf.parse("05.12.2023 17 25");//через год
         //----------------------------------------//
-        post.setTexts(List.of("text"));
+        post.setMessages(List.of(message));
         post.setPostState(postState);
         post.setDate(postDatePlanned);
         postService.planPost(post);
@@ -157,19 +161,4 @@ public class PostServiceTest {
         Assertions.assertEquals(0,chatRepository.findAll().size());
     }
 
-    @Test
-    @Disabled
-    public void testPostContent(){
-        post.setPostState(PostState.CREATED);
-
-        List<String> texts = List.of("Hello", "ByeBye", "Crazy", "Buba");
-        post.setTexts(texts);
-        postService.planPost(post);
-        Assertions.assertEquals(1,postRepository.findAll().size());
-        Assertions.assertEquals(2,chatRepository.findAll().size());
-        //Просто удаляем юзера, без удаления чата
-        userService.removeUser(user);
-        Assertions.assertEquals(0,postRepository.findAll().size());
-        Assertions.assertEquals(0,chatRepository.findAll().size());
-    }
 }

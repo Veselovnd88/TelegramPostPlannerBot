@@ -35,7 +35,7 @@ public class CreatePostHandler implements UpdateHandler {
         //Проверка на то, что пост не содержит более 15 сообщений
         // (API телеграма не позволяет отправлять в чат более 20 сообщений в минуту
         Long userId=update.getMessage().getFrom().getId();
-        if(userDataCache.getPostCreator(userId).getPost().getMessages().size()>14){
+        if(userDataCache.getPost(userId).getMessages().size()>14){
             return SendMessage.builder().chatId(userId)
                     .text("Превышено максимальное количество сообщений для отправки в канал(20)").build();
         }
@@ -60,7 +60,7 @@ public class CreatePostHandler implements UpdateHandler {
             String text = update.getMessage().getText();
             message.setText(text);
             message.setEntities(update.getMessage().getEntities());
-            userDataCache.getPostCreator(userId).addMessage(message);
+            userDataCache.getPost(userId).addMessage(message);
             log.info("Сохранен текст с разметкой для пользователя {}",userId);
             }
             //TODO сохранение файлов в форме byte[] в базе данных если решим сохранять файлы
@@ -75,35 +75,35 @@ public class CreatePostHandler implements UpdateHandler {
             }
             message.setPhoto(List.of(photoSize));
             log.info("Сохранил картинку в пост для юзера {}", userId);
-            userDataCache.getPostCreator(userId).addMessage(message);
+            userDataCache.getPost(userId).addMessage(message);
         }
         if(update.getMessage().hasAudio()){
             Message message = createMessageWithMedia(update);
             Audio audio = update.getMessage().getAudio();
             message.setAudio(audio);
             log.info("Сохранил аудиотрек в пост для юзера {}",userId);
-            userDataCache.getPostCreator(userId).addMessage(message);
+            userDataCache.getPost(userId).addMessage(message);
         }
         if(update.getMessage().hasDocument()){
             Message message = createMessageWithMedia(update);
             Document document = update.getMessage().getDocument();
             message.setDocument(document);
             log.info("Сохранил документ в пост для юзера {}",userId);
-            userDataCache.getPostCreator(userId).addMessage(message);
+            userDataCache.getPost(userId).addMessage(message);
         }
         if(update.getMessage().hasVideo()){
             Message message = createMessageWithMedia(update);
             Video video = update.getMessage().getVideo();
             message.setVideo(video);
             log.info("Сохранил видео в пост для юзера {}", userId);
-            userDataCache.getPostCreator(userId).addMessage(message);
+            userDataCache.getPost(userId).addMessage(message);
         }
         if(update.getMessage().hasAnimation()){
             Message message = createMessageWithMedia(update);
             Animation animation = update.getMessage().getAnimation();
             message.setAnimation(animation);
             log.info("Сохранил видео в пост для юзера {}", userId);
-            userDataCache.getPostCreator(userId).addMessage(message);
+            userDataCache.getPost(userId).addMessage(message);
         }
 
         if(update.getMessage().hasPoll()){
@@ -111,7 +111,7 @@ public class CreatePostHandler implements UpdateHandler {
             Poll poll = update.getMessage().getPoll();
             message.setPoll(poll);
             log.info("Сохранил опрос в пост для юзера {}", userId);
-            userDataCache.getPostCreator(userId).addMessage(message);
+            userDataCache.getPost(userId).addMessage(message);
             }
             return askAddContent(update);
      }

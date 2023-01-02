@@ -58,7 +58,7 @@ public class CallBackQueriesHandler implements UpdateHandler {
                 Set<Chat> chats= userService.findAllChatsByUser(update.getCallbackQuery().getFrom());
                 List<String> names = chats.stream()
                         .map(x-> (MessageUtils.shortenString(x.getTitle()))).toList();
-                Post processedPost = userDataCache.getPostCreator(userId).getPost();
+                Post processedPost = userDataCache.getPost(userId);
                 if(names.contains(data)) {
                     for (Chat chat : chats) {
                         if (chat.getTitle().equals(data)) {

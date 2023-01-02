@@ -1,6 +1,5 @@
 package ru.veselov.plannerBot.controller;
 
-import org.mockito.Mockito;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 

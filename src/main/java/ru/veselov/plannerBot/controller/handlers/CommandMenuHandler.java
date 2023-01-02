@@ -74,7 +74,7 @@ public class CommandMenuHandler implements UpdateHandler {
                     if(max!=-1 && byUser.size()>=max){
                         return new SendMessage(userId.toString(),POST_LIMIT+max);
                     }
-                    userDataCache.createPostCreator(update.getMessage().getFrom());
+                    userDataCache.createPost(update.getMessage().getFrom());
                     userDataCache.setUserBotState(userId,BotState.AWAITING_POST);
                     return new SendMessage(update.getMessage().getChatId().toString(),
                             AWAIT_CONTENT_MESSAGE);}
@@ -147,11 +147,9 @@ public class CommandMenuHandler implements UpdateHandler {
         }
         StringBuilder sb = new StringBuilder("Запланированные посты\n");
         for(Post p: allPlanned){
-            String format = String.format("Пост № %d, сообщений %s, картинок %s, файлов %s, опросов %s, аудио %s, видео %s," +
+            String format = String.format("Пост № %d" +
                             " будет отправлен %s в канал(ы) %s",
-                    p.getPostId(), p.getTexts().size(), p.getPhotos().size(), p.getDocs().size(),
-                    p.getPolls().size(), p.getAudios().size(), p.getVideos().size(),
-                    p.getDate(), p.getChats().stream().map(Chat::getTitle).toList());
+                    p.getPostId(), p.getDate(), p.getChats().stream().map(Chat::getTitle).toList());
             sb.append(format);
             sb.append("\n");
         }
