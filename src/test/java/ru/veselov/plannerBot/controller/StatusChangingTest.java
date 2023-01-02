@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.veselov.plannerBot.bots.BotState;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
@@ -46,6 +47,7 @@ public class StatusChangingTest {
     public Chat mockChat = spy(Chat.class);
     User user = new User();
     ArrayList<Post> mockList;
+    Message message;
     @Autowired
     private UserRepository userRepository;
 
@@ -56,6 +58,8 @@ public class StatusChangingTest {
         user.setFirstName("Zloy");
         user.setLastName("Evil");
         mockList = spy(ArrayList.class);
+        message = new Message();
+        message.setText("Text");
         /*Если бота убрали из канала, то бот уходит в статус ожидания канала*/
         userDataCache.setUserBotState(user.getId(), BotState.BOT_WAITING_FOR_ADDING_TO_CHANNEL);
         when(bot.getMyId()).thenReturn(1L);
@@ -185,7 +189,7 @@ public class StatusChangingTest {
         //Проверка изменения статуса при нажатии кнопки сохранить пост в канал
         userDataCache.setUserBotState(user.getId(),BotState.AWAITING_POST);
         userDataCache.createPostCreator(user);
-        userDataCache.getPostCreator(user.getId()).addText("Text");
+        userDataCache.getPostCreator(user.getId()).addMessage(message);
         Chat chat = new Chat();
         chat.setId(2L);
         String chatName = "test1";
@@ -202,7 +206,7 @@ public class StatusChangingTest {
     void pressSaveAnotherStatesTest(){
         //Проверка на то, что из другого состояния метод не изменит состояние бота на ожидание даты
         userDataCache.createPostCreator(user);
-        userDataCache.getPostCreator(user.getId()).addText("Text");
+        userDataCache.getPostCreator(user.getId()).addMessage(message);
         for(BotState s: BotState.values()){
             if(s!=BotState.AWAITING_POST){
                 updateController.processUpdate(actions.userPressButtonForChoseChanel(user,"postAll"));
@@ -214,7 +218,7 @@ public class StatusChangingTest {
     void userChooseDateTest(){
         userDataCache.setUserBotState(user.getId(),BotState.AWAITING_DATE);
         userDataCache.createPostCreator(user);
-        userDataCache.getPostCreator(user.getId()).addText("Text");
+        userDataCache.getPostCreator(user.getId()).addMessage(message);
         updateController.processUpdate(actions.userInputDate(user,"31.12.2022 15 00"));
         assertEquals(BotState.READY_TO_SAVE,userDataCache.getUsersBotState(user.getId()));
     }
@@ -222,7 +226,7 @@ public class StatusChangingTest {
     void userChooseDateWrongStateTest(){
         //Проверка на то, что метод переведет бота в статус READY_TO SAVE только из статуса ожидания сохранения
         userDataCache.createPostCreator(user);
-        userDataCache.getPostCreator(user.getId()).addText("Text");
+        userDataCache.getPostCreator(user.getId()).addMessage(message);
         for(BotState s: BotState.values()){
             if(s!=BotState.AWAITING_DATE){
                 updateController.processUpdate(actions.userInputDate(user,"31.12.2022 15 00"));
@@ -236,7 +240,7 @@ public class StatusChangingTest {
         //Проверка изменения статуса после сохранения даты, переход в базовое состояние
         userDataCache.setUserBotState(user.getId(),BotState.READY_TO_SAVE);
         userDataCache.createPostCreator(user);
-        userDataCache.getPostCreator(user.getId()).addText("Text");
+        userDataCache.getPostCreator(user.getId()).addMessage(message);
         updateController.processUpdate(actions.userSavedDate(user));
         assertEquals(BotState.READY_TO_WORK,userDataCache.getUsersBotState(user.getId()));
     }
@@ -244,7 +248,7 @@ public class StatusChangingTest {
     void userSaveDateWrongStateTest(){
         //Проверка на то, что метод переведет бота в базовый статус только из состояния READY_TO_SAVE
         userDataCache.createPostCreator(user);
-        userDataCache.getPostCreator(user.getId()).addText("Text");
+        userDataCache.getPostCreator(user.getId()).addMessage(message);
         for(BotState s: BotState.values()){
             if(s!=BotState.READY_TO_SAVE){
                 updateController.processUpdate(actions.userSavedDate(user));
@@ -258,7 +262,7 @@ public class StatusChangingTest {
         //Проверка того, что статус меняется на ожидание даты при нажатии пользователем кнопки о выборе другой даты
         userDataCache.setUserBotState(user.getId(),BotState.READY_TO_SAVE);
         userDataCache.createPostCreator(user);
-        userDataCache.getPostCreator(user.getId()).addText("Text");
+        userDataCache.getPostCreator(user.getId()).addMessage(message);
         updateController.processUpdate(actions.userInputDateAgain(user));
         assertEquals(BotState.AWAITING_DATE,userDataCache.getUsersBotState(user.getId()));
     }
@@ -266,7 +270,7 @@ public class StatusChangingTest {
     void userPressAgainInputDateWrongStateTest(){
         //Проверка на то, что метод меняет статус только из состояния Ready to save
         userDataCache.createPostCreator(user);
-        userDataCache.getPostCreator(user.getId()).addText("Text");
+        userDataCache.getPostCreator(user.getId()).addMessage(message);
         for(BotState s: BotState.values()){
             if(s!=BotState.READY_TO_SAVE){
                 updateController.processUpdate(actions.userInputDateAgain(user));

@@ -103,6 +103,11 @@ public class MyPreciousBot extends TelegramWebhookBot {
     @Override
     public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
         if(update!=null){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                log.error(e.getMessage());
+            }
             return updateController.processUpdate(update);
         }
         else return null;

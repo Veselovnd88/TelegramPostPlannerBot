@@ -17,6 +17,7 @@ import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.service.PostService;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
@@ -30,14 +31,17 @@ public class PostSender {
         this.bot = bot;
     }
 
-
-    /*TODO предусмотреть помещение постов в очередь если телеграм отдал ошибку 429 (много постов в 1 секунду)*/
     public void send(Post post) throws TelegramApiException {
         Map<String, SendMediaGroup> groupsCache = new HashMap<>();
         for(Chat chat: post.getChats()) {
             log.info("Отправляю пост {} в {} в канал {}",post.getPostId(), post.getDate().toString(),
                     chat.getTitle());
             for(var message: post.getMessages()){
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    log.error(e.getMessage());
+                }
                 if(message.hasText()){
                     bot.sendMessageBot(SendMessage.builder()
                                     .chatId(chat.getId())

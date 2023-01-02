@@ -32,7 +32,13 @@ public class CreatePostHandler implements UpdateHandler {
     }
 
     public SendMessage processUpdate(Update update){
+        //Проверка на то, что пост не содержит более 15 сообщений
+        // (API телеграма не позволяет отправлять в чат более 20 сообщений в минуту
         Long userId=update.getMessage().getFrom().getId();
+        if(userDataCache.getPostCreator(userId).getPost().getMessages().size()>14){
+            return SendMessage.builder().chatId(userId)
+                    .text("Превышено максимальное количество сообщений для отправки в канал(20)").build();
+        }
         //Проверка на длину подписи (caption) бот не может отправлять сообщение длинней 1024 символов
         if(update.getMessage().getCaption()!=null){
             if(update.getMessage().getCaption().length()>1024){
@@ -106,12 +112,11 @@ public class CreatePostHandler implements UpdateHandler {
             message.setPoll(poll);
             log.info("Сохранил опрос в пост для юзера {}", userId);
             userDataCache.getPostCreator(userId).addMessage(message);
-            //userDataCache.getPostCreator(userId).addPoll(poll);
             }
             return askAddContent(update);
      }
 
-    private SendMessage askAddContent(Update update){
+    private SendMessage askAddContent(Update update) {
         SendMessage contentQuestion = new SendMessage();
         contentQuestion.setChatId(update.getMessage().getChatId());
         contentQuestion.setText(MessageUtils.AWAIT_CONTENT_MESSAGE);
