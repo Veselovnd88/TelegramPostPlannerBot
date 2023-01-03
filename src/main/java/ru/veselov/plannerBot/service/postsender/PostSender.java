@@ -15,6 +15,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.service.PostService;
+import ru.veselov.plannerBot.utils.MessageUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,25 +27,42 @@ public class PostSender {
 
     private final Map<Integer, Timer> timers=new HashMap<>();
 
-    private final Map<Chat, Date> chatTimers = new HashMap<>();
+    private final Map<Long, Date> chatTimers = new HashMap<>();
 
     @Autowired
     public PostSender(MyPreciousBot bot) {
         this.bot = bot;
     }
 
-    public void send(Post post) throws TelegramApiException {
+    public synchronized void send(Post post) throws TelegramApiException {
         //TODO отправка от двух разных пользователей в один чат
 
         Map<String, SendMediaGroup> groupsCache = new HashMap<>();
         for(Chat chat: post.getChats()) {
-            if(chatTimers.containsKey(chat)){
-                Date date = new Date(new Date().getTime()+80000);//если до текущей даты + 80 секунд
-                if(chatTimers.get(chat).before(date)){
-
+            if(chatTimers.containsKey(chat.getId())){
+                if((new Date(chatTimers.get(chat.getId()).getTime()+10000)).after(new Date())){
+                    Thread delayedStart = new Thread(() -> {//FIXME создать новый Runnable
+                        try {
+                            Thread.sleep(10000);
+                            send(post);
+                            chatTimers.remove(chat.getId());
+                        } catch (TelegramApiException e) {
+                            log.error("Не удалось отправить сообщение {}", e.getMessage());
+                            try{
+                                bot.execute(SendMessage.builder().chatId(post.getUser().getId())
+                                        .text(MessageUtils.ERROR_MESSAGE).build());
+                            } catch (TelegramApiException ex) {
+                                log.error("Не удалось отправить сообщение об ошибке пользователю {}", post.getUser().getId());
+                            }
+                        } catch (InterruptedException e) {
+                            log.error(e.getMessage());
+                        }
+                    });
+                    delayedStart.start();
+                    return;
                 }
             }
-            chatTimers.put(chat,new Date());
+            chatTimers.put(chat.getId(),new Date());
             log.info("Отправляю пост {} в {} в канал {}",post.getPostId(), post.getDate().toString(),
                     chat.getTitle());
             for(var message: post.getMessages()){
@@ -213,7 +231,7 @@ public class PostSender {
         }
     }
 
-    /*Создается объект таймера и помещается в кеш, на тот случай, если пользоватеть отправил пост в канал
+    /*Создается объект таймера и помещается в кеш, на тот случай, если пользователь отправил пост в канал
     * нажатием кнопки "Отправить сейчас", чтобы не было повторного вызова таймера*/
     public void createTimer(Post post, PostService postService){
         PostSenderTask postSenderTask = new PostSenderTask(bot, post, postService, this);
