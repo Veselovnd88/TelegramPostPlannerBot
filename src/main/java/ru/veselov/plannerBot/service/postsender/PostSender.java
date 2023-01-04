@@ -1,7 +1,9 @@
 package ru.veselov.plannerBot.service.postsender;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.*;
@@ -23,10 +25,12 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class PostSender {
+    @Value("${bot.chat-interval}")
+    private long chatInterval;
     private final MyPreciousBot bot;
 
     private final Map<Integer, Timer> timers=new HashMap<>();
-
+    @Getter
     private final Map<Long, Date> chatTimers = new HashMap<>();
 
     @Autowired
@@ -35,17 +39,22 @@ public class PostSender {
     }
 
     public synchronized void send(Post post) throws TelegramApiException {
-        //TODO отправка от двух разных пользователей в один чат
-
         Map<String, SendMediaGroup> groupsCache = new HashMap<>();
+        removeOldChats();
         for(Chat chat: post.getChats()) {
             if(chatTimers.containsKey(chat.getId())){
-                if((new Date(chatTimers.get(chat.getId()).getTime()+10000)).after(new Date())){
-                    Thread delayedStart = new Thread(() -> {//FIXME создать новый Runnable
+                //Если в кеше с таймерами есть наш чат, то проверяем время отправки, если время + 60 секунд
+                //позже текущей даты(отправка была меньше минуту назад), то запускаем эту отправку в новом треде
+                //с задержкой +- 60 сек, и обновляем время отправки данного чата
+                Date chatDate = new Date(chatTimers.get(chat.getId()).getTime()+chatInterval);
+                if((chatDate).after(new Date())){
+                    Thread delayedStart = new Thread(() -> {
                         try {
-                            Thread.sleep(10000);
+                            log.info("Отправлю пост {} назначенный в то же время через {} мс",post.getPostId(),
+                                    chatInterval);
+                            Thread.sleep(chatInterval);
                             send(post);
-                            chatTimers.remove(chat.getId());
+                            chatTimers.put(chat.getId(), chatDate);
                         } catch (TelegramApiException e) {
                             log.error("Не удалось отправить сообщение {}", e.getMessage());
                             try{
@@ -265,6 +274,15 @@ public class PostSender {
         list.add(inputMedia);
         sendMediaGroup.setMedias(list);
         return sendMediaGroup;
+    }
+    /*Метод проходит по мапе с чатами и их временем отправки, и удаляет оттуда те, в которых отправка была ранее чем
+    * минуту назад*/
+    private void removeOldChats(){
+        List<Long> ids = chatTimers.entrySet().stream().filter(x -> (new Date(x.getValue().getTime() + chatInterval)).before(new Date()))
+                .map(Map.Entry::getKey).toList();
+        for(long l: ids){
+            chatTimers.remove(l);
+        }
     }
 
 

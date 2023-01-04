@@ -36,8 +36,9 @@ public class CreatePostHandler implements UpdateHandler {
         // (API телеграма не позволяет отправлять в чат более 20 сообщений в минуту
         Long userId=update.getMessage().getFrom().getId();
         if(userDataCache.getPost(userId).getMessages().size()>14){
-            return SendMessage.builder().chatId(userId)
-                    .text("Превышено максимальное количество сообщений для отправки в канал(20)").build();
+            SendMessage addContentMessage = askAddContent(update);
+            addContentMessage.setText("Превышено максимальное количество сообщений для отправки в канал(15)");
+            return addContentMessage;
         }
         //Проверка на длину подписи (caption) бот не может отправлять сообщение длинней 1024 символов
         if(update.getMessage().getCaption()!=null){

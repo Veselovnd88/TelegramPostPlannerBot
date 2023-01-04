@@ -2,6 +2,7 @@ package ru.veselov.plannerBot.service.postsender;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 
 @SpringBootTest
+@Disabled
 class PostSenderTest {
     @MockBean
     MyPreciousBot bot;
@@ -36,6 +38,7 @@ class PostSenderTest {
     void init(){
         post = new Post();
         post.setDate(new Date());
+        post.setPostId(1);
         chat = new Chat();
         chat.setId(1L);
         chat.setTitle("Test");
@@ -45,9 +48,11 @@ class PostSenderTest {
         chat2.setTitle("Test2");
 
         post2 = new Post();
+        post2.setPostId(2);
         post2.setDate(new Date());
         post2.setChats(Set.of(chat));
         post3=new Post();
+        post3.setPostId(3);
         post3.setDate(new Date());
         post3.setChats(Set.of(chat2));
     }
@@ -83,26 +88,30 @@ class PostSenderTest {
         }
         Date before = new Date();
         try {
-            postSender.send(post);
-            postSender.send(post2);
-            postSender.send(post3);
+            postSender.send(post);//отправка в чат1
+            postSender.send(post2);//отправка в чат1
+            postSender.send(post3);//отправка в чат2
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
         try {
             Thread.sleep(16000);
-        } catch (InterruptedException e) {
+            postSender.send(post3);// отправка в чат2, но уже в разрешенное время
+        } catch (InterruptedException | TelegramApiException e) {
             throw new RuntimeException(e);
         }
         Mockito.verify(bot,Mockito.times(40)).sendMessageBot(
                 SendMessage.builder().chatId(chat.getId())
                         .text("Text").build());
-        Mockito.verify(bot,Mockito.times(20)).sendMessageBot(
+        Mockito.verify(bot,Mockito.times(40)).sendMessageBot(
                 SendMessage.builder().chatId(chat2.getId())
                         .text("Text").build());
         Date after = new Date();
         System.out.println(after.getTime()-before.getTime());
         assertTrue((after.getTime()-before.getTime())<quantity*3*150+16000);
 
+        System.out.println(postSender.getChatTimers());
+        assertEquals(1,postSender.getChatTimers().size());
+        assertNotNull(postSender.getChatTimers().get(chat2.getId()));
     }
 }

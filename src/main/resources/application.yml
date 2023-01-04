@@ -10,12 +10,13 @@ logging:
 bot:
   name: ${PL_BOT_NAME}
   token: ${PL_BOT_TOKEN}
-  webhookpath:  https://a6be-93-179-122-84.eu.ngrok.io
+  webhookpath:  https://6851-93-179-122-84.eu.ngrok.io
   adminId: 101516610
   status:
     standard: 10
     premium: 50
   period: "0 * * * * *"
+  chat-interval: 70000
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
