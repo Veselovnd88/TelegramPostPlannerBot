@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;
+import ru.veselov.plannerBot.cache.TimersCache;
 import ru.veselov.plannerBot.model.PostEntity;
 import ru.veselov.plannerBot.model.PostState;
 import ru.veselov.plannerBot.model.UserEntity;
@@ -26,7 +27,7 @@ public class UserService {
 
     private final ChatRepository chatRepository;
     private final PostRepository postRepository;
-
+    private final TimersCache timersCache;
     private final UserRepository userRepository;
 
     @Value("${bot.status.standard}")
@@ -35,9 +36,10 @@ public class UserService {
     private Integer premium;
 
     @Autowired
-    public UserService(ChatRepository chatRepository, PostRepository postRepository, UserRepository userRepository) {
+    public UserService(ChatRepository chatRepository, PostRepository postRepository, TimersCache timersCache, UserRepository userRepository) {
         this.chatRepository = chatRepository;
         this.postRepository = postRepository;
+        this.timersCache = timersCache;
         this.userRepository = userRepository;
     }
 
@@ -100,13 +102,15 @@ public class UserService {
                         Set<PostEntity> posts = Set.copyOf(chatEntity.getPosts());
                         for(PostEntity post: posts){
                             post.removeChat(chatEntity);
-                            if(post.getChats().isEmpty()){//если чатов не осталось, то ставим статус Deleted и сохраняем
-                                post.setPostState(PostState.DELETED);//FIXME также нужно проверить что удалили таймеры
-                                log.info("Пост {} пользователя {} сейчас сохранен в бд со статусом Deleted," +
-                                                " без связи с пользователем",
-                                        post.getPostId(),userEntity.getUserId());
-                                //FIXME postSender.removeTimer()
-                                postRepository.save(post);
+                            if(post.getChats().isEmpty()){
+                                //если чатов не осталось, то ставим статус Deleted и сохраняем
+                                if(post.getPostState()==PostState.PLANNED|| post.getPostState()==PostState.SAVED){
+                                    post.setPostState(PostState.DELETED);
+                                    log.info("Пост {} пользователя {} сейчас сохранен в бд со статусом Deleted," +
+                                                    " без связи с пользователем",
+                                            post.getPostId(),userEntity.getUserId());
+                                    timersCache.removeTimer(post.getPostId());//удаляем таймеры
+                                postRepository.save(post);}
                             }
                         }
                         chatRepository.delete(chatEntity);

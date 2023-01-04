@@ -15,6 +15,7 @@ import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.veselov.plannerBot.bots.MyPreciousBot;
+import ru.veselov.plannerBot.cache.TimersCache;
 import ru.veselov.plannerBot.model.Post;
 import ru.veselov.plannerBot.service.PostService;
 import ru.veselov.plannerBot.utils.MessageUtils;
@@ -28,14 +29,14 @@ public class PostSender {
     @Value("${bot.chat-interval}")
     private long chatInterval;
     private final MyPreciousBot bot;
-
-    private final Map<Integer, Timer> timers=new HashMap<>();
+    private final TimersCache timersCache;
     @Getter
     private final Map<Long, Date> chatTimers = new HashMap<>();
 
     @Autowired
-    public PostSender(MyPreciousBot bot) {
+    public PostSender(MyPreciousBot bot, TimersCache timersCache) {
         this.bot = bot;
+        this.timersCache = timersCache;
     }
 
     public synchronized void send(Post post) throws TelegramApiException {
@@ -244,20 +245,17 @@ public class PostSender {
     * нажатием кнопки "Отправить сейчас", чтобы не было повторного вызова таймера*/
     public void createTimer(Post post, PostService postService){
         PostSenderTask postSenderTask = new PostSenderTask(bot, post, postService, this);
-        if(timers.containsKey(post.getPostId())){
-            Timer savedTimer = timers.get(post.getPostId());
-            log.info("Таймер поста {} отменен", post.getPostId());
-            savedTimer.purge();
-            savedTimer.cancel();
+        if(timersCache.contains(post.getPostId())){
+            timersCache.removeTimer(post.getPostId());
         }
         Timer timer = new Timer();
         timer.schedule(postSenderTask, post.getDate());
         log.info("Пост № {} запланирован к отправке на {}", post.getPostId(), post.getDate());
-        timers.put(post.getPostId(),timer);
+        timersCache.addTimer(post.getPostId(),timer);
     }
 
     public void removeTimer(Integer postId){
-        timers.remove(postId);
+        timersCache.removeTimer(postId);
     }
     /*Функция проверяет, что все сообщения с одной медиагруппой собраны в объект SendMediaGroup
     * и что пора ее отправлять*/
