@@ -30,7 +30,7 @@ spring:
     ddl-auto: create
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.PostgreSQL95Dialect
         show_sql: false
 service:
   file_info:
